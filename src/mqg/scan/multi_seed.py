@@ -86,8 +86,16 @@ def train_multi_seed(
     seeds: list[int],
     device: str = "cpu",
     log_steps: tuple[int, ...] | None = None,
+    at_log_step_hook=None,
 ) -> list[TrainResult]:
     """Train `len(seeds)` seeds in parallel via vmap.
+
+    Args:
+        at_log_step_hook: optional callable invoked at every log step:
+            ``hook(step: int, params: dict[str, Tensor], buffers: dict, base: MiniQwen)``
+            where params/buffers have leading dim N=len(seeds). Hook can
+            unstack a seed and run measures on it (see scan/instrumented.py).
+            Hook MUST NOT mutate `params` or `buffers`.
 
     Returns a list of TrainResult, one per seed (in same order).
     """
@@ -175,6 +183,9 @@ def train_multi_seed(
                         T_target[i] = min(T_cap, T_target[i] * 10)
                     else:
                         stopped[i] = True
+
+            if at_log_step_hook is not None:
+                at_log_step_hook(step, params, buffers, base)
 
     # build results
     results: list[TrainResult] = []
