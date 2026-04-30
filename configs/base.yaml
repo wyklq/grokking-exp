@@ -1,0 +1,43 @@
+# Mini-Qwen base configuration
+# Architecture (locked decisions D4 in findings.md)
+model:
+  d_model: 64
+  n_layers: 2
+  n_heads: 4
+  head_dim: 16
+  n_kv_heads: 1            # GQA: 1 KV head shared across 4 Q heads
+  ffn_hidden: 170          # ≈ 8/3 * d_model for SwiGLU
+  vocab_size: 115          # p + 2 (p=113, '+', '=')
+  max_seq_len: 8           # plenty for [a, +, b, =, c]
+  rope_base: 10000.0
+  norm_eps: 1.0e-5
+  tied_embedding: true     # default true; group C uses false
+
+# Task (D5)
+task:
+  p: 113
+  op: add                  # mod-p addition
+  vocab:
+    plus_token_id: 113
+    eq_token_id: 114
+
+# Training (Phase 3)
+train:
+  optimizer: adamw
+  lr: 1.0e-3
+  betas: [0.9, 0.98]
+  weight_decay: 1.0        # this is λ, scanned in phase diagram
+  full_batch: true
+  T_min: 100000            # 1e5
+  T_max: 5000000           # 5e6
+  grok_extension_factor: 50
+  acc_threshold: 0.99
+  log_steps: [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000, 5000000]
+  ckpt_steps: ${train.log_steps}
+  seed: 0
+
+# Data split (D6)
+split:
+  strategy: S1             # S1 | S3
+  alpha: 0.3               # train fraction
+  seed: 0

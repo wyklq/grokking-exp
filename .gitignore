@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# Editor
+.vscode/
+.idea/
+
+# Results / artefacts (large)
+results/
+wandb/
+outputs/
+*.parquet
+*.ckpt
+*.pt
+!tests/**/*.pt
+
+# OS
+.DS_Store
