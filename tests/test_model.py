@@ -1,8 +1,6 @@
 """Unit tests for Mini-Qwen architecture (Phase 2)."""
 from __future__ import annotations
 
-import math
-
 import pytest
 import torch
 
@@ -76,6 +74,10 @@ class TestRoPE:
         with pytest.raises(ValueError):
             rope.get(10)
 
+    def test_invalid_head_dim_raises(self):
+        with pytest.raises(ValueError, match="positive even"):
+            RoPECache(head_dim=15, max_seq_len=8)
+
 
 # ---------------------------------------------------------------------------
 # GQA
@@ -94,6 +96,13 @@ class TestGQA:
         n = sum(p.numel() for p in attn.parameters())
         # q: 64*64=4096, k: 64*16=1024, v: 64*16=1024, o: 64*64=4096
         assert n == 4096 + 1024 + 1024 + 4096 == 10240
+
+    def test_invalid_config_raises(self):
+        rope = RoPECache(16, 8)
+        with pytest.raises(ValueError, match="must equal d_model"):
+            GQAAttention(d_model=32, n_heads=4, head_dim=16, n_kv_heads=1, rope=rope)
+        with pytest.raises(ValueError, match="divisible"):
+            GQAAttention(d_model=64, n_heads=4, head_dim=16, n_kv_heads=3, rope=rope)
 
     def test_causal_mask_applied(self):
         """Output at position t must not depend on inputs at positions > t."""

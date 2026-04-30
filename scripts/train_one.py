@@ -15,8 +15,6 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
-import torch
-
 from mqg.data import TaskSpec, make_split
 from mqg.model import MiniQwenConfig
 from mqg.train import TrainConfig, train_one_cell

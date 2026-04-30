@@ -57,6 +57,16 @@ def main() -> int:
     p.add_argument("--device", type=str, default="cpu")
     p.add_argument("--quiet", action="store_true")
     args = p.parse_args()
+    if args.alpha == []:
+        p.error("--alpha requires at least one value when provided")
+    if args.lams == []:
+        p.error("--lambda requires at least one value when provided")
+    if args.measures_steps == []:
+        p.error("--measures-steps requires at least one value when provided")
+    if args.n_seeds < 1:
+        p.error("--n-seeds must be >= 1")
+    if args.hessian_iters < 1:
+        p.error("--hessian-iters must be >= 1")
 
     split_strategy, tied = GROUP_PRESETS[args.group]
     spec = TaskSpec(p=args.p)
@@ -86,6 +96,7 @@ def main() -> int:
     all_rows: list[dict] = []
     cell_summary: list[dict] = []
     cells = grid.cells()
+    log_steps = tuple(args.measures_steps) if args.measures_steps is not None else None
     for k, cell in enumerate(cells, 1):
         t_cell = time.time()
         results, rows = run_cell_with_measures(
@@ -98,6 +109,7 @@ def main() -> int:
             base_model_cfg=model_cfg,
             split_seed=args.split_seed,
             device=args.device,
+            log_steps=log_steps,
             measures_steps=args.measures_steps,
             skip_hessian=args.skip_hessian,
             hessian_iters=args.hessian_iters,

@@ -14,8 +14,6 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
-import torch
-
 from mqg.data import TaskSpec
 from mqg.model import MiniQwenConfig
 from mqg.scan import (
@@ -53,6 +51,12 @@ def main() -> int:
     p.add_argument("--skip-phase2", action="store_true")
     p.add_argument("--quiet", action="store_true")
     args = p.parse_args()
+    if args.alpha == []:
+        p.error("--alpha requires at least one value when provided")
+    if args.lams == []:
+        p.error("--lambda requires at least one value when provided")
+    if args.n_seeds < 1:
+        p.error("--n-seeds must be >= 1")
 
     split_strategy, tied = GROUP_PRESETS[args.group]
     spec = TaskSpec(p=args.p)

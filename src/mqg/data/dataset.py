@@ -23,6 +23,12 @@ class TaskSpec:
     p: int
     op: str = "add"  # 'add' | 'mul'
 
+    def __post_init__(self) -> None:
+        if self.p < 2:
+            raise ValueError(f"p must be >= 2, got {self.p}")
+        if self.op not in {"add", "mul"}:
+            raise ValueError(f"Unknown op: {self.op}")
+
     @property
     def vocab_size(self) -> int:
         return self.p + 2

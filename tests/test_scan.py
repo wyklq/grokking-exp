@@ -1,7 +1,7 @@
 """Tests for Phase 4: vmap multi-seed, grid, boundary detection, scan runner."""
 from __future__ import annotations
 
-import torch
+import pytest
 
 from mqg.data import TaskSpec, make_split
 from mqg.model import MiniQwenConfig
@@ -27,12 +27,12 @@ class TestGrid:
         assert min(a) == 0.1 and max(a) == 0.9
 
     def test_default_lambda_logspace(self):
-        l = default_lambda_grid(7, 1e-2, 1e1)
-        assert len(l) == 7
-        assert abs(l[0] - 1e-2) < 1e-6
-        assert abs(l[-1] - 1e1) < 1e-3
+        lams = default_lambda_grid(7, 1e-2, 1e1)
+        assert len(lams) == 7
+        assert abs(lams[0] - 1e-2) < 1e-6
+        assert abs(lams[-1] - 1e1) < 1e-3
         # Check log spacing: ratio between consecutive values should be roughly constant
-        ratios = [l[i+1] / l[i] for i in range(len(l)-1)]
+        ratios = [lams[i + 1] / lams[i] for i in range(len(lams) - 1)]
         for r in ratios:
             assert abs(r - ratios[0]) / ratios[0] < 1e-3
 
@@ -48,6 +48,16 @@ class TestGrid:
         g = default_grid_spec()
         assert g.shape == (9, 7)
         assert len(g.cells()) == 63
+
+    def test_invalid_grid_rejected(self):
+        with pytest.raises(ValueError, match="alpha_values"):
+            GridSpec(alpha_values=(), lambda_values=(0.1,))
+        with pytest.raises(ValueError, match="alpha_values"):
+            GridSpec(alpha_values=(1.0,), lambda_values=(0.1,))
+        with pytest.raises(ValueError, match="lambda_values"):
+            GridSpec(alpha_values=(0.5,), lambda_values=(-0.1,))
+        with pytest.raises(ValueError, match="grid size"):
+            default_alpha_grid(1)
 
 
 # ---------------- Boundary ----------------
@@ -160,6 +170,11 @@ class TestMultiSeed:
         for s, m in zip(single.history, multi.history):
             assert abs(s.train_loss - m.train_loss) < 1e-4, \
                 f"WD path differs at step {s.step}: {s.train_loss} vs {m.train_loss}"
+
+    def test_empty_seeds_rejected(self):
+        spec, mcfg, tcfg, tr, te = self._make()
+        with pytest.raises(ValueError, match="seeds"):
+            train_multi_seed(mcfg, tcfg, spec, tr, te, seeds=[])
 
 
 # ---------------- scan_runner ----------------

@@ -27,7 +27,7 @@ def _unflatten_like(flat: Tensor, ref: list[Tensor]) -> list[Tensor]:
     offset = 0
     for r in ref:
         n = r.numel()
-        out.append(flat[offset:offset + n].view_as(r))
+        out.append(flat[offset : offset + n].view_as(r))
         offset += n
     return out
 
@@ -65,24 +65,36 @@ def top_hessian_eigenvalue(
 
     Returns the Rayleigh quotient v^T H v after convergence (or n_iter steps).
     """
+    if not params:
+        raise ValueError("params must be non-empty")
+    if n_iter < 1:
+        raise ValueError(f"n_iter must be >= 1, got {n_iter}")
+    devices = {p.device for p in params}
+    if len(devices) != 1:
+        raise ValueError(f"all params must be on the same device, got {devices}")
+    dtypes = {p.dtype for p in params}
+    if len(dtypes) != 1:
+        raise ValueError(f"all params must have the same dtype, got {dtypes}")
+
     g = torch.Generator(device=params[0].device).manual_seed(seed)
     n_total = sum(p.numel() for p in params)
     v = torch.randn(n_total, generator=g, device=params[0].device, dtype=params[0].dtype)
     v = v / v.norm()
-    last = float("inf")
+    zero_threshold = torch.finfo(v.dtype).tiny
+    last_mag = float("inf")
     for _ in range(n_iter):
         Hv = hvp(loss_fn, params, v)
         norm = Hv.norm()
-        if norm.item() < 1e-30:
+        eig_mag = float(norm.item())
+        if eig_mag < zero_threshold:
             return 0.0
         v_new = Hv / norm
-        eig = float((v_new @ Hv).item())  # Rayleigh quotient v_new^T H v_new ≈ v_new^T (norm * v_new)
-        if abs(eig - last) < tol * max(abs(eig), 1.0):
+        if abs(eig_mag - last_mag) < tol * max(eig_mag, 1.0):
             v = v_new
-            last = eig
             break
         v = v_new
-        last = eig
-    # Final Rayleigh quotient
+        last_mag = eig_mag
+    # Final signed Rayleigh quotient. The iteration converges by magnitude,
+    # but this preserves negative dominant eigenvalues.
     Hv = hvp(loss_fn, params, v)
     return float((v @ Hv).item())

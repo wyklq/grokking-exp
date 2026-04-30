@@ -26,14 +26,15 @@ def linear_cka(X: Tensor, Y: Tensor) -> float:
     Returns:
         CKA in [0, 1]; 1 = identical representations up to rotation/scale.
     """
-    assert X.shape[0] == Y.shape[0], "X and Y must have same n"
+    if X.shape[0] != Y.shape[0]:
+        raise ValueError(f"X and Y must have same n, got {X.shape[0]} and {Y.shape[0]}")
     Xc = _center(X.detach().float())
     Yc = _center(Y.detach().float())
     hsic_xy = (Xc.T @ Yc).pow(2).sum()
     hsic_xx = (Xc.T @ Xc).pow(2).sum()
     hsic_yy = (Yc.T @ Yc).pow(2).sum()
     denom = (hsic_xx * hsic_yy).sqrt()
-    if denom.item() < 1e-30:
+    if denom.item() < torch.finfo(denom.dtype).tiny:
         return 0.0
     return float((hsic_xy / denom).item())
 

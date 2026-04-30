@@ -25,10 +25,18 @@ class GQAAttention(nn.Module):
         rope: RoPECache,
     ) -> None:
         super().__init__()
-        assert n_heads * head_dim == d_model, (
-            f"n_heads ({n_heads}) * head_dim ({head_dim}) must equal d_model ({d_model})"
-        )
-        assert n_heads % n_kv_heads == 0, "n_heads must be divisible by n_kv_heads"
+        if n_heads <= 0:
+            raise ValueError(f"n_heads must be positive, got {n_heads}")
+        if n_kv_heads <= 0:
+            raise ValueError(f"n_kv_heads must be positive, got {n_kv_heads}")
+        if head_dim <= 0:
+            raise ValueError(f"head_dim must be positive, got {head_dim}")
+        if n_heads * head_dim != d_model:
+            raise ValueError(
+                f"n_heads ({n_heads}) * head_dim ({head_dim}) must equal d_model ({d_model})"
+            )
+        if n_heads % n_kv_heads != 0:
+            raise ValueError("n_heads must be divisible by n_kv_heads")
         self.d_model = d_model
         self.n_heads = n_heads
         self.head_dim = head_dim

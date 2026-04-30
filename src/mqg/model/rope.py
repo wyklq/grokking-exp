@@ -10,8 +10,17 @@ import torch
 from torch import Tensor, nn
 
 
-def _build_cache(max_seq_len: int, head_dim: int, base: float, device, dtype):
-    assert head_dim % 2 == 0, "head_dim must be even for RoPE"
+def _build_cache(
+    max_seq_len: int,
+    head_dim: int,
+    base: float,
+    device: str | torch.device,
+    dtype: torch.dtype,
+) -> tuple[Tensor, Tensor]:
+    if max_seq_len < 1:
+        raise ValueError(f"max_seq_len must be >= 1, got {max_seq_len}")
+    if head_dim <= 0 or head_dim % 2 != 0:
+        raise ValueError(f"head_dim must be a positive even integer for RoPE, got {head_dim}")
     half = head_dim // 2
     # frequencies for each pair (i = 0..half-1)
     freqs = base ** (-torch.arange(0, half, device=device, dtype=torch.float32) / half)
@@ -49,6 +58,7 @@ class RoPECache(nn.Module):
         self.head_dim = head_dim
         self.max_seq_len = max_seq_len
         self.base = base
+        # Buffers are created on CPU and follow the module when `.to(device)` is called.
         cos, sin = _build_cache(max_seq_len, head_dim, base, device="cpu", dtype=torch.float32)
         self.register_buffer("cos", cos, persistent=False)
         self.register_buffer("sin", sin, persistent=False)

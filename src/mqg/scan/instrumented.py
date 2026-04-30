@@ -11,17 +11,15 @@ trajectory density isn't needed everywhere.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Callable, Iterable, Optional
+from typing import Iterable, Optional
 
-import torch
 from torch import Tensor
 
 from ..data import TaskSpec, build_full_dataset, make_split
 from ..measures import compute_all_measures
 from ..model import MiniQwen, MiniQwenConfig
 from ..train.trainer import TrainConfig
-from .grid import GridCell, GridSpec
+from .grid import GridCell
 from .multi_seed import train_multi_seed
 
 
@@ -45,24 +43,13 @@ def unstack_seed(
     # MiniQwen's state_dict includes both params and buffers (e.g. RoPE cache).
     # Use strict=False because RoPE buffers may not be in `buffers` dict if
     # they were registered as `persistent=False`.
-    missing, unexpected = model.load_state_dict(state, strict=False)
-    # Allow missing buffers (RoPE is non-persistent and reconstructed in __init__)
+    expected_keys = set(model.state_dict().keys())
+    loadable_state = {name: value for name, value in state.items() if name in expected_keys}
+    load_info = model.load_state_dict(loadable_state, strict=False)
+    if load_info.missing_keys:
+        raise RuntimeError(f"Failed to load seed {seed_idx}; missing keys: {load_info.missing_keys}")
+    # Non-persistent buffers such as RoPE caches are reconstructed in __init__.
     return model
-
-
-@dataclass
-class TrajectoryRow:
-    group: str
-    split_strategy: str
-    tied_embedding: bool
-    alpha_idx: int
-    lambda_idx: int
-    alpha: float
-    lam: float
-    seed: int
-    split_seed: int
-    step: int
-    # measures will be merged in via measures_dict
 
 
 def run_cell_with_measures(
@@ -89,6 +76,8 @@ def run_cell_with_measures(
         trajectory_rows: list[dict], each row keyed by (group, alpha_idx,
             lambda_idx, seed, step) with all measure values flattened in.
     """
+    if not seeds:
+        raise ValueError("seeds must be non-empty")
     train_cfg = TrainConfig(
         lr=base_train_cfg.lr,
         betas=base_train_cfg.betas,
@@ -119,7 +108,7 @@ def run_cell_with_measures(
         "split_seed": split_seed,
     }
 
-    def hook(step: int, params: dict, buffers: dict, base: MiniQwen):
+    def hook(step: int, params: dict, buffers: dict, _base: MiniQwen) -> None:
         if measures_steps_set is not None and step not in measures_steps_set:
             return
         for i, sd in enumerate(seeds):

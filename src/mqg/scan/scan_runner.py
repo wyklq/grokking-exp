@@ -10,16 +10,13 @@ lambda_idx, seed). Aggregation (majority phase, etc.) is downstream.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Optional
-
-import torch
-from torch import Tensor
 
 from ..data import TaskSpec, make_split
 from ..model import MiniQwenConfig
 from ..train.trainer import TrainConfig, TrainResult
-from .boundary import detect_boundary_cells, majority_phase
+from .boundary import detect_boundary_cells
 from .grid import GridCell, GridSpec
 from .multi_seed import train_multi_seed
 
@@ -93,6 +90,8 @@ def run_cell(
 
     Same train/test split is used across seeds (controlled by `split_seed`).
     """
+    if not seeds:
+        raise ValueError("seeds must be non-empty")
     train_cfg = TrainConfig(
         lr=base_train_cfg.lr,
         betas=base_train_cfg.betas,
@@ -176,6 +175,8 @@ def run_phase2(
     Reuses Phase 1's seed=0 result; runs seeds 1..n_seeds-1 here.
     Returns ONLY the new records (Phase 2 additions).
     """
+    if n_seeds < 1:
+        raise ValueError(f"n_seeds must be >= 1, got {n_seeds}")
     cell_phase: dict[tuple[int, int], str] = {
         (r.alpha_idx, r.lambda_idx): r.phase for r in phase1_records if r.seed == 0
     }

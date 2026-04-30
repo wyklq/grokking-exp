@@ -1,9 +1,10 @@
 """Tests for dataset and split logic (Phase 3)."""
 from __future__ import annotations
 
+import pytest
 import torch
 
-from mqg.data import TaskSpec, build_full_dataset, compute_answer, make_split, split_S1, split_S3
+from mqg.data import TaskSpec, build_full_dataset, make_split, split_S1, split_S3
 
 
 class TestDataset:
@@ -32,6 +33,12 @@ class TestDataset:
         a, b = tokens[:, 0], tokens[:, 2]
         assert torch.equal(c, (a * b) % spec.p)
 
+    def test_invalid_spec_raises(self):
+        with pytest.raises(ValueError, match="p must be >= 2"):
+            TaskSpec(p=1)
+        with pytest.raises(ValueError, match="Unknown op"):
+            TaskSpec(p=7, op="sub")
+
 
 class TestSplitS1:
     def test_alpha_size(self):
@@ -51,13 +58,16 @@ class TestSplitS1:
         union = torch.cat([train_idx, test_idx]).sort().values
         assert torch.equal(union, torch.arange(50))
 
+    def test_invalid_alpha_raises(self):
+        with pytest.raises(ValueError, match="alpha"):
+            split_S1(100, alpha=0.0, seed=0)
+
 
 class TestSplitS3:
     def test_b_columns_partition(self):
         spec = TaskSpec(p=11)
         train_idx, test_idx = split_S3(spec, alpha=0.3, seed=0)
         # Reconstruct (a, b) for each pair
-        a_all = torch.arange(11).repeat_interleave(11)
         b_all = torch.arange(11).repeat(11)
 
         train_b = set(b_all[train_idx].tolist())
@@ -90,6 +100,11 @@ class TestSplitS3:
         train_idx, _ = split_S3(spec, alpha=0.01, seed=0)
         assert len(train_idx) >= 11  # >= p (one b column)
 
+    def test_invalid_alpha_raises(self):
+        spec = TaskSpec(p=11)
+        with pytest.raises(ValueError, match="alpha"):
+            split_S3(spec, alpha=1.0, seed=0)
+
 
 class TestMakeSplit:
     def test_dispatch(self):
@@ -101,8 +116,5 @@ class TestMakeSplit:
 
     def test_unknown_strategy_raises(self):
         spec = TaskSpec(p=7)
-        try:
+        with pytest.raises(ValueError, match="Unknown split strategy"):
             make_split("S99", spec, 0.5, seed=0)
-        except ValueError:
-            return
-        raise AssertionError("expected ValueError")

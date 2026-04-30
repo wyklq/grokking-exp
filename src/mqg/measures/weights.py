@@ -7,10 +7,10 @@ from torch import Tensor, nn
 
 def weight_norm(model: nn.Module, p: float = 2.0) -> float:
     """Total Lp norm of all model parameters (default L2)."""
-    sq = 0.0
-    for param in model.parameters():
-        sq += float(param.detach().norm(p=p).item() ** p)
-    return float(sq ** (1.0 / p))
+    norms = [param.detach().float().norm(p=p) for param in model.parameters()]
+    if not norms:
+        return 0.0
+    return float(torch.stack(norms).pow(p).sum().pow(1.0 / p).item())
 
 
 def per_layer_weight_norms(model: nn.Module, p: float = 2.0) -> dict[str, float]:
@@ -26,13 +26,14 @@ def stable_rank(W: Tensor) -> float:
 
     Always >= 1 for nonzero W; equals true rank when all singular values equal.
     """
+    W = W.detach().float()
     if W.dim() == 1:
         W = W.unsqueeze(0)
-    fro = float((W.detach() ** 2).sum().item())
-    op = float(torch.linalg.matrix_norm(W.detach(), ord=2).item())
-    if op == 0:
+    fro = (W ** 2).sum()
+    op = torch.linalg.matrix_norm(W, ord=2)
+    if op.item() == 0.0:
         return 0.0
-    return fro / (op ** 2)
+    return float((fro / (op ** 2)).item())
 
 
 def effective_rank(W: Tensor) -> float:
@@ -41,12 +42,13 @@ def effective_rank(W: Tensor) -> float:
     Equals true rank for orthonormal columns; smoothly degrades when
     singular values decay.
     """
+    W = W.detach().float()
     if W.dim() == 1:
         W = W.unsqueeze(0)
-    s = torch.linalg.svdvals(W.detach())
-    s = s[s > 1e-12]
+    s = torch.linalg.svdvals(W)
+    s = s[s > 0]
     if s.numel() == 0:
         return 0.0
     p = s / s.sum()
-    H = -(p * torch.log(p + 1e-30)).sum()
+    H = -(p * torch.log(p)).sum()
     return float(torch.exp(H).item())

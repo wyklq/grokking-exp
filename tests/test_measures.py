@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math
 
+import pytest
 import torch
 
 from mqg.measures import (
@@ -40,6 +41,10 @@ class TestFourier:
         x[0] = 1.0
         # max Gini for n elements with single nonzero is (n-1)/n = 0.9
         assert abs(_gini(x).item() - 0.9) < 1e-6
+
+    def test_gini_rejects_negative_values(self):
+        with pytest.raises(ValueError, match="non-negative"):
+            _gini(torch.tensor([1.0, -1.0]))
 
     def test_sparsity_random_low(self):
         torch.manual_seed(0)
@@ -86,7 +91,7 @@ class TestFourier:
 
     def test_circularity_perfect(self):
         """If E rows lie exactly on a circle for freq=k, CV should be ~0."""
-        p, d = 31, 4
+        p = 31
         k = 5
         n = torch.arange(p, dtype=torch.float32)
         # Construct E so each token n maps to (cos, sin) on unit circle in 2D
@@ -97,6 +102,15 @@ class TestFourier:
         E = torch.stack([cos, sin, cos, sin], dim=1)
         cv = circularity(E, freq=k)
         assert cv < 0.01, f"perfectly circular should have CV~0, got {cv}"
+
+    def test_circularity_is_scale_invariant(self):
+        p = 31
+        k = 5
+        n = torch.arange(p, dtype=torch.float32)
+        cos = torch.cos(2 * math.pi * k * n / p)
+        sin = torch.sin(2 * math.pi * k * n / p)
+        E = torch.stack([cos, sin, cos, sin], dim=1)
+        assert abs(circularity(E, freq=k) - circularity(1e-8 * E, freq=k)) < 1e-4
 
 
 # ---------------- Weights ----------------
@@ -114,9 +128,13 @@ class TestWeights:
         assert set(d.keys()) == {"weight", "bias"}
 
     def test_stable_rank_identity(self):
-        I = torch.eye(5)
+        identity = torch.eye(5)
         # All singular values 1 → stable rank = 5/1 = 5
-        assert abs(stable_rank(I) - 5.0) < 1e-5
+        assert abs(stable_rank(identity) - 5.0) < 1e-5
+
+    def test_stable_rank_scaled_identity(self):
+        identity = 1e-8 * torch.eye(5)
+        assert abs(stable_rank(identity) - 5.0) < 1e-5
 
     def test_stable_rank_rank1(self):
         u = torch.randn(10, 1)
@@ -125,9 +143,13 @@ class TestWeights:
         assert abs(stable_rank(W) - 1.0) < 1e-4
 
     def test_effective_rank_identity(self):
-        I = torch.eye(7)
+        identity = torch.eye(7)
         # Equal singular values → entropy = log(7), exp() = 7
-        assert abs(effective_rank(I) - 7.0) < 1e-4
+        assert abs(effective_rank(identity) - 7.0) < 1e-4
+
+    def test_effective_rank_scaled_identity(self):
+        identity = 1e-8 * torch.eye(7)
+        assert abs(effective_rank(identity) - 7.0) < 1e-4
 
     def test_effective_rank_rank1(self):
         u = torch.randn(10, 1)
@@ -163,6 +185,10 @@ class TestCKA:
         # Random uncorrelated Gaussians → CKA should be small
         assert linear_cka(X, Y) < 0.3
 
+    def test_cka_rejects_mismatched_n(self):
+        with pytest.raises(ValueError, match="same n"):
+            linear_cka(torch.randn(3, 2), torch.randn(4, 2))
+
 
 # ---------------- Hessian ----------------
 
@@ -179,6 +205,17 @@ class TestHessian:
 
         eig = top_hessian_eigenvalue(loss_fn, [theta], n_iter=30, seed=0)
         assert abs(eig - 5.0) < 1e-3, f"expected 5.0, got {eig}"
+
+    def test_negative_dominant_eigenvalue_preserves_sign(self):
+        """Power iteration converges by magnitude but returns signed Rayleigh quotient."""
+        theta = torch.randn(3, requires_grad=True)
+        A = torch.diag(torch.tensor([-5.0, 1.0, 2.0]))
+
+        def loss_fn():
+            return 0.5 * theta @ A @ theta
+
+        eig = top_hessian_eigenvalue(loss_fn, [theta], n_iter=50, seed=0)
+        assert abs(eig + 5.0) < 1e-3, f"expected -5.0, got {eig}"
 
     def test_hvp_correctness(self):
         """For L = 0.5 ||theta||^2, H = I, so Hv == v."""

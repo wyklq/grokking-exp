@@ -1,19 +1,22 @@
+PYTHON ?= python3
+RUFF ?= ruff
+
 .PHONY: setup smoke test lint clean
 
 setup:
-	pip install -e ".[dev]"
+	$(PYTHON) -m pip install -e ".[dev]"
 
 setup-wandb:
-	pip install -e ".[dev,wandb]"
+	$(PYTHON) -m pip install -e ".[dev,wandb]"
 
 smoke:
-	python -m pytest tests/smoke_test.py -v
+	$(PYTHON) -m pytest tests/smoke_test.py -v
 
 test:
-	python -m pytest tests/ -v
+	$(PYTHON) -m pytest tests/ -v
 
 lint:
-	ruff check src tests
+	$(RUFF) check src tests scripts
 
 clean:
 	rm -rf build dist *.egg-info

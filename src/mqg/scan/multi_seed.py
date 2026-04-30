@@ -15,7 +15,7 @@ Key invariants (per rubber-duck design review):
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Callable
 from typing import Optional
 
 import torch
@@ -26,11 +26,11 @@ from ..data import TaskSpec, build_full_dataset
 from ..model import MiniQwen, MiniQwenConfig
 from ..train.checkpoints import LogStepIterator
 from ..train.trainer import (
-    PhaseLabel,
     StepLog,
     TrainConfig,
     TrainResult,
     classify_phase,
+    validate_train_inputs,
 )
 
 
@@ -86,7 +86,7 @@ def train_multi_seed(
     seeds: list[int],
     device: str = "cpu",
     log_steps: tuple[int, ...] | None = None,
-    at_log_step_hook=None,
+    at_log_step_hook: Callable[[int, dict, dict, MiniQwen], None] | None = None,
 ) -> list[TrainResult]:
     """Train `len(seeds)` seeds in parallel via vmap.
 
@@ -100,7 +100,9 @@ def train_multi_seed(
     Returns a list of TrainResult, one per seed (in same order).
     """
     N = len(seeds)
-    assert N >= 1
+    if N < 1:
+        raise ValueError("seeds must be non-empty")
+    validate_train_inputs(model_cfg, train_cfg, spec)
 
     params, buffers, base = _build_stacked(model_cfg, seeds, device)
 

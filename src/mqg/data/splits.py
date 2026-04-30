@@ -17,13 +17,21 @@ import torch
 from .dataset import TaskSpec
 
 
+def _validate_alpha(alpha: float) -> None:
+    if not 0.0 < alpha < 1.0:
+        raise ValueError(f"alpha must be in the open interval (0, 1), got {alpha}")
+
+
 def split_S1(
     n_pairs: int, alpha: float, seed: int
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Random split. Returns (train_idx, test_idx) into the p^2 pair list."""
+    _validate_alpha(alpha)
+    if n_pairs < 2:
+        raise ValueError(f"n_pairs must be >= 2, got {n_pairs}")
     g = torch.Generator().manual_seed(seed)
     perm = torch.randperm(n_pairs, generator=g)
-    n_train = int(round(alpha * n_pairs))
+    n_train = min(max(1, int(round(alpha * n_pairs))), n_pairs - 1)
     return perm[:n_train].sort().values, perm[n_train:].sort().values
 
 
@@ -35,13 +43,13 @@ def split_S3(
     Returns (train_idx, test_idx) into the p^2 pair list.
     Pair index = a * p + b (matches build_full_dataset's enumeration order).
     """
+    _validate_alpha(alpha)
     p = spec.p
     g = torch.Generator().manual_seed(seed)
     perm = torch.randperm(p, generator=g)
-    n_train_b = max(1, int(round(alpha * p)))
+    n_train_b = min(max(1, int(round(alpha * p))), p - 1)
     train_b = set(perm[:n_train_b].tolist())
 
-    a_all = torch.arange(p).repeat_interleave(p)
     b_all = torch.arange(p).repeat(p)
     train_mask = torch.tensor([b.item() in train_b for b in b_all])
 

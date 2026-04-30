@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import torch
 
-from mqg.data import TaskSpec, make_split
+from mqg.data import TaskSpec
 from mqg.model import MiniQwen, MiniQwenConfig
 from mqg.scan import run_cell_with_measures, to_dataframe, unstack_seed
 from mqg.scan.grid import GridCell

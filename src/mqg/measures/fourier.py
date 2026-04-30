@@ -31,10 +31,11 @@ def _gini(x: Tensor) -> Tensor:
     G = 0 means perfectly uniform; G -> 1 means concentrated on one entry.
     """
     x = x.flatten()
-    assert torch.all(x >= 0), "Gini requires non-negative values"
+    if bool((x < 0).any().item()):
+        raise ValueError("Gini requires non-negative values")
     n = x.numel()
-    if n == 0 or x.sum() == 0:
-        return torch.tensor(0.0)
+    if n == 0 or x.sum().item() == 0:
+        return x.new_tensor(0.0)
     sorted_x, _ = torch.sort(x)
     idx = torch.arange(1, n + 1, dtype=sorted_x.dtype, device=sorted_x.device)
     return ((2 * idx - n - 1) * sorted_x).sum() / (n * sorted_x.sum())
@@ -107,8 +108,11 @@ def circularity(E: Tensor, freq: int) -> float:
         CV = std(r) / mean(r)
     Lower CV = more circular = more grokked.
     """
+    if not E.is_floating_point():
+        E = E.float()
     p = E.shape[0]
-    n = torch.arange(p, dtype=torch.float32, device=E.device)
+    tiny = torch.finfo(E.dtype).tiny
+    n = torch.arange(p, dtype=E.dtype, device=E.device)
     angle = 2 * torch.pi * freq * n / p
     cos_b = torch.cos(angle)  # (p,)
     sin_b = torch.sin(angle)
@@ -122,7 +126,7 @@ def circularity(E: Tensor, freq: int) -> float:
     # Closed form: a_cos = (cos_b @ E) / (cos_b @ cos_b), similarly a_sin.
     a_cos = (cos_b @ E) / (cos_b @ cos_b)  # (d,)
     a_sin = (sin_b @ E) / (sin_b @ sin_b)
-    x = E @ a_cos / (a_cos @ a_cos + 1e-12)  # (p,) — coordinate along cos axis
-    y = E @ a_sin / (a_sin @ a_sin + 1e-12)
-    r = torch.sqrt(x ** 2 + y ** 2 + 1e-12)
-    return float((r.std() / (r.mean() + 1e-12)).item())
+    x = E @ a_cos / (a_cos @ a_cos + tiny)  # (p,) — coordinate along cos axis
+    y = E @ a_sin / (a_sin @ a_sin + tiny)
+    r = torch.sqrt(x ** 2 + y ** 2 + tiny)
+    return float((r.std() / (r.mean() + tiny)).item())

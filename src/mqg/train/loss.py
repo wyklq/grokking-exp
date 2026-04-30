@@ -30,6 +30,19 @@ def answer_logits_and_targets(
         ans_logits: (B, V) — logits at position answer_pos - 1
         targets:    (B,)   — token at position answer_pos
     """
+    if logits.ndim != 3:
+        raise ValueError(f"logits must have shape (B, S, V), got {tuple(logits.shape)}")
+    if tokens.ndim != 2:
+        raise ValueError(f"tokens must have shape (B, S), got {tuple(tokens.shape)}")
+    if logits.shape[:2] != tokens.shape:
+        raise ValueError(
+            f"logits and tokens batch/sequence dims must match, got "
+            f"{tuple(logits.shape[:2])} and {tuple(tokens.shape)}"
+        )
+    if not 1 <= answer_pos < tokens.shape[1]:
+        raise ValueError(
+            f"answer_pos={answer_pos} out of range; expected 1 <= answer_pos < {tokens.shape[1]}"
+        )
     ans_logits = logits[:, answer_pos - 1, :]
     targets = tokens[:, answer_pos]
     return ans_logits, targets

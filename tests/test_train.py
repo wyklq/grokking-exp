@@ -8,10 +8,11 @@ defer training to a GPU machine). We verify:
 """
 from __future__ import annotations
 
+import pytest
 import torch
 
 from mqg.data import TaskSpec, make_split
-from mqg.model import MiniQwen, MiniQwenConfig
+from mqg.model import MiniQwenConfig
 from mqg.train import (
     TrainConfig,
     answer_logits_and_targets,
@@ -43,6 +44,12 @@ class TestLoss:
         assert acc.item() == 1.0
         assert loss.item() < 1e-3
 
+    def test_invalid_answer_pos_raises(self):
+        tokens = torch.tensor([[1, 113, 2, 114, 3]])
+        logits = torch.zeros(1, 5, 115)
+        with pytest.raises(ValueError, match="answer_pos"):
+            answer_logits_and_targets(logits, tokens, answer_pos=0)
+
 
 class TestPhaseClassifier:
     def test_fail(self):
@@ -59,6 +66,10 @@ class TestPhaseClassifier:
     def test_comprehend(self):
         # gap = 5000, threshold = 10000 -> comprehend
         assert classify_phase(t_train=1000, t_test=6000) == "comprehend"
+
+    def test_invalid_grok_ratio_raises(self):
+        with pytest.raises(ValueError, match="grok_ratio"):
+            classify_phase(t_train=1000, t_test=6000, grok_ratio=0.0)
 
 
 class TestLogStepIterator:
@@ -139,3 +150,11 @@ class TestTrainerSmoke:
         # but t_test also met (acc >= 0.0 always) -> finishes around T_target
         assert result.t_train == 1
         assert result.t_test == 1
+
+    def test_model_task_vocab_mismatch_raises(self):
+        spec = TaskSpec(p=5)
+        model_cfg = MiniQwenConfig(vocab_size=spec.vocab_size + 1)
+        train_cfg = TrainConfig(T_min=1, T_max=1)
+        train_idx, test_idx = make_split("S1", spec, alpha=0.8, seed=0)
+        with pytest.raises(ValueError, match="vocab_size mismatch"):
+            train_one_cell(model_cfg, train_cfg, spec, train_idx, test_idx, log_steps=(1,))

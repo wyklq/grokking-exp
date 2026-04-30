@@ -15,6 +15,7 @@ Returns a TrainResult with phase classification and full history at log steps.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -65,6 +66,8 @@ def classify_phase(
     t_test: Optional[int],
     grok_ratio: float = 10.0,
 ) -> PhaseLabel:
+    if grok_ratio <= 0:
+        raise ValueError(f"grok_ratio must be positive, got {grok_ratio}")
     if t_train is None:
         return "fail"
     if t_test is None:
@@ -85,6 +88,42 @@ def evaluate(
     return float(loss.item()), float(acc.item())
 
 
+def validate_train_inputs(
+    model_cfg: MiniQwenConfig,
+    train_cfg: TrainConfig,
+    spec: TaskSpec,
+) -> None:
+    if model_cfg.vocab_size != spec.vocab_size:
+        raise ValueError(
+            f"vocab_size mismatch: model_cfg.vocab_size={model_cfg.vocab_size}, "
+            f"spec.vocab_size={spec.vocab_size}"
+        )
+    if model_cfg.max_seq_len < spec.seq_len:
+        raise ValueError(
+            f"model_cfg.max_seq_len={model_cfg.max_seq_len} is smaller than "
+            f"spec.seq_len={spec.seq_len}"
+        )
+    if train_cfg.T_min < 1:
+        raise ValueError(f"T_min must be >= 1, got {train_cfg.T_min}")
+    if train_cfg.T_max < train_cfg.T_min:
+        raise ValueError(
+            f"T_max must be >= T_min, got T_max={train_cfg.T_max}, T_min={train_cfg.T_min}"
+        )
+    if train_cfg.grok_extension_factor < 1:
+        raise ValueError(
+            "grok_extension_factor must be >= 1, "
+            f"got {train_cfg.grok_extension_factor}"
+        )
+    if not 0.0 <= train_cfg.acc_threshold <= 1.0:
+        raise ValueError(f"acc_threshold must be in [0, 1], got {train_cfg.acc_threshold}")
+    if train_cfg.weight_decay < 0:
+        raise ValueError(f"weight_decay must be non-negative, got {train_cfg.weight_decay}")
+    if train_cfg.lr <= 0:
+        raise ValueError(f"lr must be positive, got {train_cfg.lr}")
+    if train_cfg.grok_ratio <= 0:
+        raise ValueError(f"grok_ratio must be positive, got {train_cfg.grok_ratio}")
+
+
 def train_one_cell(
     model_cfg: MiniQwenConfig,
     train_cfg: TrainConfig,
@@ -93,9 +132,10 @@ def train_one_cell(
     test_idx: Tensor,
     device: str = "cpu",
     log_steps: tuple[int, ...] | None = None,
-    on_log=None,
+    on_log: Callable[[StepLog], None] | None = None,
 ) -> TrainResult:
     """Train a single (alpha, lambda) cell with adaptive T."""
+    validate_train_inputs(model_cfg, train_cfg, spec)
     torch.manual_seed(train_cfg.seed)
 
     tokens, _ = build_full_dataset(spec)
