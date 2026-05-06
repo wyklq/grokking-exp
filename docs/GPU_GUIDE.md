@@ -46,8 +46,8 @@ python3 scripts/train_one.py \
 
 **预期输出**：
 ```
-[setup] p=113 alpha=0.3 lambda=1.0 split=S1 tied=True | train=3829 test=8940
-[result] phase=grok t_train=~5000 t_test=~80000 final_step=~250000 (~5min on 4090)
+[setup] p=113 alpha=0.3 lambda=1.0 split=S1 tied=True | train=3831 test=8938
+[result] phase=grok t_train=~200 t_test=~50000 final_step=~100000
 [saved] results/single_cell/p113_a0.3_l1.0_splitS1_tiedTrue_seed0.json
 ```
 
@@ -62,7 +62,7 @@ python3 scripts/train_one.py \
 
 ## 3. Group A 主扫描（baseline：S1 + tied embedding）
 
-**完整扫描**（9×7=63 cells，每 cell 1 seed）：
+**完整扫描**（9×7=63 cells，每 cell 1 seed，推荐命令）：
 
 ```bash
 python3 scripts/run_scan_instrumented.py \
@@ -74,6 +74,21 @@ python3 scripts/run_scan_instrumented.py \
     --skip-hessian \
     --device cuda \
     --out results/scans/A_p113_phase1.parquet
+```
+
+**中断后续跑**（同一个 `--out`，加 `--resume`）：
+
+```bash
+python3 scripts/run_scan_instrumented.py \
+    --group A --p 113 \
+    --T-min 100000 --T-max 5000000 \
+    --n-seeds 1 \
+    --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
+    --progress-interval-steps 100000 \
+    --skip-hessian \
+    --device cuda \
+    --out results/scans/A_p113_phase1.parquet \
+    --resume
 ```
 
 **日志说明**：
@@ -89,15 +104,17 @@ python3 scripts/run_scan_instrumented.py \
 
 | GPU | 估算 |
 |---|---|
-| RTX 4090 24GB | ~50min |
-| A100 40GB | ~25min |
-| H100 80GB | ~12min |
+| Blackwell 32GB | 低 alpha memorize cell 约 5–6 分钟；完整 63 cell 至少数小时，hard/fail cell 可能显著更久 |
+| RTX 4090 24GB | 预计同量级或稍慢 |
+| A100/H100 | 取决于小模型 full-batch 利用率，不能只按 FLOPS 线性估算 |
 
 > Hessian 计算（power iteration ~10 次双 backward）会让单 cell 多跑 30-60s × N_seeds × N_measure_steps。N=1 + 7 measure steps + skip_hessian → 已可接受。要包含 Hessian，去掉 `--skip-hessian` 并预期 +60% 总耗时。
 
 ---
 
 ## 4. Group B 主贡献（**核心**：S3 + tied embedding）
+
+从头跑：
 
 ```bash
 python3 scripts/run_scan_instrumented.py \
@@ -111,11 +128,28 @@ python3 scripts/run_scan_instrumented.py \
     --out results/scans/B_p113_phase1.parquet
 ```
 
+续跑：
+
+```bash
+python3 scripts/run_scan_instrumented.py \
+    --group B --p 113 \
+    --T-min 100000 --T-max 5000000 \
+    --n-seeds 1 \
+    --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
+    --progress-interval-steps 100000 \
+    --skip-hessian \
+    --device cuda \
+    --out results/scans/B_p113_phase1.parquet \
+    --resume
+```
+
 **关键观测**：在 S3 split 下，未见过的 b 值在测试时不会作为输入 token 出现 → 真正考验"学到群运算"而非"插值见过的 b"。预期 grok 区会比 Group A 小或不同。
 
 ---
 
 ## 5. Group C 消融（S3 + untied embedding）
+
+从头跑：
 
 ```bash
 python3 scripts/run_scan_instrumented.py \
@@ -127,6 +161,21 @@ python3 scripts/run_scan_instrumented.py \
     --skip-hessian \
     --device cuda \
     --out results/scans/C_p113_phase1.parquet
+```
+
+续跑：
+
+```bash
+python3 scripts/run_scan_instrumented.py \
+    --group C --p 113 \
+    --T-min 100000 --T-max 5000000 \
+    --n-seeds 1 \
+    --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
+    --progress-interval-steps 100000 \
+    --skip-hessian \
+    --device cuda \
+    --out results/scans/C_p113_phase1.parquet \
+    --resume
 ```
 
 **预期**：测试集准确率应稳定在 ≈1/p（理论上限），证明 untied + S3 的"未见 token 测试"是架构性 tautology — 这正是 Group B 比 Group C 更有意义的理论依据。
@@ -221,6 +270,8 @@ plt.scatter(last.fourier_sparsity, last.weight_norm_total,
 ## 附：核心提交历史
 
 ```
+08231b7  feat: add GPU scan observability and resume
+94dd38a  chore: harden codebase reliability and lint
 0a1d474  Phase 5b: instrumented scan with measures trajectories
 51fb38b  Phase 5a: 8 progress measures (dual-track)
 4c14fe0  Phase 4: vmap multi-seed scan infrastructure
@@ -233,4 +284,4 @@ b1ecf5f  Phase 2: Mini-Qwen architecture (RMSNorm, RoPE, GQA, SwiGLU)
 
 ---
 
-*生成日期：2026-04-30 · 对应 commit `0a1d474`*
+*更新日期：2026-05-06 · 对应 commit `08231b7`*
