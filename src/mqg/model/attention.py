@@ -14,6 +14,24 @@ from torch import Tensor, nn
 
 from .rope import RoPECache, apply_rope
 
+# Fused FlashAttention / EfficientAttention CUDA kernels enforce strict stride
+# alignment on Q/K/V/LSE. Under torch.func.vmap (used by train_multi_seed for
+# the parallel multi-seed scan) the batched-tensor strides do not satisfy that
+# alignment and PyTorch raises e.g.
+#   RuntimeError: LSE is not correctly aligned (strideH)
+# (see https://github.com/pytorch/pytorch/issues/161310). The MATH backend has
+# no such checks and is vmap-safe; for our small model (S<=8, head_dim=16) the
+# performance difference vs. flash/efficient is negligible because cuBLAS still
+# handles the underlying matmuls. We import lazily because torch.nn.attention
+# is only available on PyTorch >= 2.3.
+try:
+    from torch.nn.attention import SDPBackend, sdpa_kernel
+
+    _SDPA_VMAP_SAFE_BACKENDS = [SDPBackend.MATH]
+except ImportError:  # pragma: no cover - older PyTorch fallback
+    sdpa_kernel = None
+    _SDPA_VMAP_SAFE_BACKENDS = None
+
 
 class GQAAttention(nn.Module):
     def __init__(
@@ -79,7 +97,18 @@ class GQAAttention(nn.Module):
         v = v.transpose(1, 2)
 
         if q.is_cuda:
-            out = F.scaled_dot_product_attention(q, k, v, is_causal=True)  # (B, H, S, D)
+            # Make Q/K/V contiguous so the MATH backend hits the fused fast path
+            # and not a strided fallback. Flash/Efficient backends are disabled
+            # via sdpa_kernel because they are incompatible with torch.func.vmap
+            # (see comment at top of file).
+            q = q.contiguous()
+            k = k.contiguous()
+            v = v.contiguous()
+            if sdpa_kernel is not None:
+                with sdpa_kernel(_SDPA_VMAP_SAFE_BACKENDS):
+                    out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
+            else:  # pragma: no cover - older PyTorch fallback
+                out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
         else:
             attn_scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
             causal_mask = torch.triu(

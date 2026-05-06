@@ -291,3 +291,36 @@ def test_model_works_under_vmap_eval():
     assert logits.shape == (n_seeds, 2, 5, cfg.vocab_size)
     # Different seeds must give different logits (random init differs)
     assert not torch.allclose(logits[0], logits[1])
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA-only regression")
+def test_model_vmap_backward_on_cuda():
+    """Regression: vmap'd backward must not trigger SDPA stride-alignment errors.
+
+    The fused FlashAttention/EfficientAttention kernels reject batched-tensor
+    strides under torch.func.vmap with errors like
+        RuntimeError: LSE is not correctly aligned (strideH)
+    GQAAttention.forward selects a vmap-safe SDPA backend on CUDA; this test
+    exercises that path end-to-end (forward + summed-loss backward) the same
+    way train_multi_seed does.
+    """
+    from torch.func import functional_call, stack_module_state, vmap
+
+    device = "cuda"
+    cfg = MiniQwenConfig()
+    n_seeds = 2
+    models = [MiniQwen(cfg).to(device) for _ in range(n_seeds)]
+    params, buffers = stack_module_state(models)
+
+    base = MiniQwen(cfg).to("meta")
+
+    def fmodel(p, b, t):
+        return functional_call(base, (p, b), (t,))
+
+    tokens = torch.randint(0, cfg.vocab_size, (3, 5), device=device)
+    logits = vmap(fmodel, in_dims=(0, 0, None))(params, buffers, tokens)
+    assert logits.shape == (n_seeds, 3, 5, cfg.vocab_size)
+    logits.sum().backward()  # this is what raised "LSE is not correctly aligned"
+    for p in params.values():
+        assert p.grad is not None
+        assert torch.isfinite(p.grad).all()
