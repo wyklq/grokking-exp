@@ -1,6 +1,6 @@
 # GPU 使用手册 — Mini-Qwen Grokking 实验
 
-> **场景**：你已经在 CPU 上完成了所有代码开发（Phase 1–5b，6 commits），现在切到 GPU 机器（推荐 RTX 4090 24GB / A100 40GB）跑真正的相图实验。
+> **场景**：你已经在 CPU 上完成了所有代码开发，现在切到 GPU 机器（推荐 RTX 4090 24GB / A100 40GB / Blackwell 32GB）跑真正的相图实验。
 
 ---
 
@@ -9,8 +9,7 @@
 ```bash
 nvidia-smi        # 确认 GPU 可见
 python3 --version # >= 3.10
-git log --oneline | head -6
-# 预期看到 6 个 commit：1075613..0a1d474
+git log --oneline | head
 ```
 
 ---
@@ -22,7 +21,7 @@ cd /path/to/ai_exp
 python3 -m pip install --upgrade pip setuptools wheel
 pip install -e .
 make smoke   # 4/4 通过 = 包安装成功
-make test    # 87/87 通过 = 全栈无回归（CPU 上 ~6s）
+make test    # 全栈无回归（CPU 上数秒级）
 ```
 
 **潜在坑**：
@@ -71,10 +70,20 @@ python3 scripts/run_scan_instrumented.py \
     --T-min 100000 --T-max 5000000 \
     --n-seeds 1 \
     --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
+    --progress-interval-steps 100000 \
     --skip-hessian \
     --device cuda \
     --out results/scans/A_p113_phase1.parquet
 ```
+
+**日志说明**：
+
+- `[cell ... log]`：在 evaluation/checkpoint step 打印 train/test acc、`t_train`、`t_test`、当前 `T_target`。
+- `[cell ... progress]`：轻量 heartbeat，不额外跑 eval；默认每 100k step 打印一次，可用 `--progress-interval-steps 0` 关闭。
+- `[cell ... measures]`：该 step 已写入多少条 progress-measure row。
+- `[partial]`：每个 cell 完成后写一次 `*.partial.parquet`，中断也能保留已完成 cell。
+
+如果某个 cell 在 100k 还没达到训练阈值，adaptive-T 会继续跑到 500k、1M 甚至 5M；这时看到 heartbeat 但暂时没有 cell completion 是正常现象。
 
 **预计耗时**（仅供参考，依赖 cell 实际收敛快慢）：
 
@@ -96,6 +105,7 @@ python3 scripts/run_scan_instrumented.py \
     --T-min 100000 --T-max 5000000 \
     --n-seeds 1 \
     --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
+    --progress-interval-steps 100000 \
     --skip-hessian \
     --device cuda \
     --out results/scans/B_p113_phase1.parquet
@@ -113,6 +123,7 @@ python3 scripts/run_scan_instrumented.py \
     --T-min 100000 --T-max 5000000 \
     --n-seeds 1 \
     --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
+    --progress-interval-steps 100000 \
     --skip-hessian \
     --device cuda \
     --out results/scans/C_p113_phase1.parquet
@@ -136,6 +147,8 @@ Phase 1 用 1 seed/cell，边界处可能有噪声。对每个分类不一致的
 results/scans/
 ├── A_p113_phase1.parquet           # trajectory (long-format, 1 行/(cell,seed,step))
 ├── A_p113_phase1.cells.parquet     # cell summary (1 行/(cell,seed))
+├── A_p113_phase1.partial.parquet   # 中途进度（每完成 1 cell 刷新）
+├── A_p113_phase1.partial.cells.parquet
 ├── B_p113_phase1.parquet
 ├── B_p113_phase1.cells.parquet
 ├── C_p113_phase1.parquet
@@ -187,7 +200,8 @@ plt.scatter(last.fourier_sparsity, last.weight_norm_total,
 | OOM | 当前实现是全批训练，p=113 → 12769 sample × 5 seq → ~64MB activations，4090 安全。如 OOM 检查是否同时跑了别的进程 |
 | 训练 loss NaN | 检查 lr 是否过大（`--lr 1e-4`）；Adam betas 不变 |
 | 全 cell phase=fail | T_min 不够，加大 `--T-min 500000` |
-| Phase 1 跑到一半中断 | 当前不支持 resume；需重跑或减小 grid（`--alpha 0.3 0.5 --lambda 0.1 1.0`）做局部扫描 |
+| Phase 1 跑到一半中断 | 使用同一个 `--out` 加 `--resume`；脚本会读取 `*.partial.cells.parquet` 并跳过已完成 cells |
+| 长时间没有 cell completion | 看 `[cell ... progress]` heartbeat；通常是该 cell 自适应延长到 500k/1M/5M |
 | Hessian 收敛慢 / 不稳定 | `--hessian-iters 30`（默认 10），或继续 `--skip-hessian` |
 | Parquet 读不出 | 确保 `pip install pyarrow`，且 Python ≥ 3.10 |
 | 结果与论文 Liu et al. 2022 相图不一致 | 我们用 ~93k 参数 mini-Qwen，他们用 ~10k 参数 MLP；定性应一致（4 区拓扑），定量边界不同 |
@@ -204,7 +218,7 @@ plt.scatter(last.fourier_sparsity, last.weight_norm_total,
 
 ---
 
-## 附：完整 6-commit 提交历史
+## 附：核心提交历史
 
 ```
 0a1d474  Phase 5b: instrumented scan with measures trajectories
@@ -215,7 +229,7 @@ b1ecf5f  Phase 2: Mini-Qwen architecture (RMSNorm, RoPE, GQA, SwiGLU)
 1075613  Phase 1: project skeleton, configs, smoke test green
 ```
 
-测试覆盖：87/87 ✅（4 smoke + 11 data + 22 model + 9 train + 14 scan + 23 measures + 4 instrumented）
+测试覆盖：`make test` ✅
 
 ---
 

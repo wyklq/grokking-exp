@@ -16,7 +16,7 @@ See `docs/` for the full guides:
 ```bash
 make setup     # install dependencies
 make smoke     # run smoke test (model forward pass)
-make test      # run full test suite (87/87 expected)
+make test      # run full test suite
 ```
 
 **Single-cell run**:
@@ -27,10 +27,11 @@ python3 scripts/train_one.py --p 113 --alpha 0.3 --lambda 1.0 --T-min 100000 --d
 **Full instrumented scan** (one experimental group):
 ```bash
 python3 scripts/run_scan_instrumented.py --group B --p 113 --device cuda \
-    --measures-steps 100 1000 10000 100000 1000000 --skip-hessian
+    --measures-steps 100 1000 10000 100000 1000000 \
+    --progress-interval-steps 100000 --skip-hessian
 ```
 
-See `docs/GPU_GUIDE.md` for full command reference.
+The instrumented scan emits per-cell checkpoint logs, lightweight heartbeats, and partial Parquet files so long GPU runs can be monitored and resumed. See `docs/GPU_GUIDE.md` for full command reference.
 
 ## Layout
 
@@ -43,7 +44,7 @@ src/mqg/
   scan/           # vmap multi-seed + grid + boundary detection + instrumented runs
 configs/          # Hydra configs (decisions D1-D8 locked here)
 scripts/          # CLIs: train_one, run_scan, run_scan_instrumented
-tests/            # 87 unit + smoke + equivalence tests
+  tests/            # unit + smoke + equivalence tests
 docs/             # GPU_GUIDE.md
 results/          # Scan outputs (gitignored)
 ```

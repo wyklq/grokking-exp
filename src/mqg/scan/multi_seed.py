@@ -33,6 +33,19 @@ from ..train.trainer import (
     validate_train_inputs,
 )
 
+LogStepCallback = Callable[
+    [
+        int,
+        list[StepLog | None],
+        list[Optional[int]],
+        list[Optional[int]],
+        list[int],
+        list[bool],
+    ],
+    None,
+]
+ProgressCallback = Callable[[int], None]
+
 
 def _build_stacked(
     model_cfg: MiniQwenConfig, seeds: list[int], device: str
@@ -87,6 +100,9 @@ def train_multi_seed(
     device: str = "cpu",
     log_steps: tuple[int, ...] | None = None,
     at_log_step_hook: Callable[[int, dict, dict, MiniQwen], None] | None = None,
+    on_log_step: LogStepCallback | None = None,
+    progress_interval_steps: int | None = None,
+    on_progress: ProgressCallback | None = None,
 ) -> list[TrainResult]:
     """Train `len(seeds)` seeds in parallel via vmap.
 
@@ -96,6 +112,12 @@ def train_multi_seed(
             where params/buffers have leading dim N=len(seeds). Hook can
             unstack a seed and run measures on it (see scan/instrumented.py).
             Hook MUST NOT mutate `params` or `buffers`.
+        on_log_step: optional callable invoked after per-seed log metrics and
+            adaptive-T bookkeeping are updated. It receives one StepLog per seed,
+            with None for seeds already stopped before this checkpoint.
+        progress_interval_steps: optional lightweight heartbeat interval. This
+            does not trigger an evaluation; use it only for observability.
+        on_progress: optional callable invoked at heartbeat steps.
 
     Returns a list of TrainResult, one per seed (in same order).
     """
@@ -103,6 +125,10 @@ def train_multi_seed(
     if N < 1:
         raise ValueError("seeds must be non-empty")
     validate_train_inputs(model_cfg, train_cfg, spec)
+    if progress_interval_steps is not None and progress_interval_steps < 1:
+        raise ValueError(
+            f"progress_interval_steps must be >= 1 when set, got {progress_interval_steps}"
+        )
 
     params, buffers, base = _build_stacked(model_cfg, seeds, device)
 
@@ -148,6 +174,7 @@ def train_multi_seed(
         step += 1
 
         if log_iter.reached(step):
+            step_logs: list[StepLog | None] = [None] * N
             with torch.no_grad():
                 tr_logits = vfwd(params, buffers, train_tokens)
                 tr_loss, tr_acc = _per_seed_loss_acc(tr_logits, train_tokens, spec.answer_pos)
@@ -157,15 +184,15 @@ def train_multi_seed(
             for i in range(N):
                 if stopped[i]:
                     continue
-                histories[i].append(
-                    StepLog(
-                        step=step,
-                        train_loss=float(tr_loss[i].item()),
-                        train_acc=float(tr_acc[i].item()),
-                        test_loss=float(te_loss[i].item()),
-                        test_acc=float(te_acc[i].item()),
-                    )
+                log = StepLog(
+                    step=step,
+                    train_loss=float(tr_loss[i].item()),
+                    train_acc=float(tr_acc[i].item()),
+                    test_loss=float(te_loss[i].item()),
+                    test_acc=float(te_acc[i].item()),
                 )
+                histories[i].append(log)
+                step_logs[i] = log
                 final_step[i] = step
 
                 if t_train[i] is None and tr_acc[i].item() >= train_cfg.acc_threshold:
@@ -186,8 +213,23 @@ def train_multi_seed(
                     else:
                         stopped[i] = True
 
+            if on_log_step is not None:
+                on_log_step(
+                    step,
+                    step_logs,
+                    t_train.copy(),
+                    t_test.copy(),
+                    T_target.copy(),
+                    stopped.copy(),
+                )
             if at_log_step_hook is not None:
                 at_log_step_hook(step, params, buffers, base)
+        elif (
+            progress_interval_steps is not None
+            and on_progress is not None
+            and step % progress_interval_steps == 0
+        ):
+            on_progress(step)
 
     # build results
     results: list[TrainResult] = []

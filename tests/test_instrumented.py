@@ -1,6 +1,10 @@
 """Tests for instrumented scan: unstack_seed + run_cell_with_measures."""
 from __future__ import annotations
 
+import subprocess
+import sys
+
+import pandas as pd
 import torch
 
 from mqg.data import TaskSpec
@@ -99,3 +103,88 @@ class TestInstrumentedRun:
         assert "fourier_sparsity" in df.columns
         assert df.iloc[0]["seed"] == 0
         assert df.iloc[0]["step"] == 20
+
+    def test_progress_callbacks(self):
+        spec = TaskSpec(p=5)
+        model_cfg = MiniQwenConfig(vocab_size=spec.vocab_size)
+        train_cfg = TrainConfig(lr=1e-3, weight_decay=0.0, T_min=20, T_max=20, seed=0)
+        cell = GridCell(alpha_idx=0, lambda_idx=0, alpha=0.6, lam=0.0)
+        train_log_steps: list[int] = []
+        heartbeat_steps: list[int] = []
+        measure_events: list[tuple[int, int, int]] = []
+
+        def on_train_log(step, step_logs, *_):
+            train_log_steps.append(step)
+            assert step_logs[0] is not None
+
+        def on_measure_step(step: int, new_rows: int, total_rows: int):
+            measure_events.append((step, new_rows, total_rows))
+
+        run_cell_with_measures(
+            group="A",
+            split_strategy="S1",
+            spec=spec,
+            cell=cell,
+            seeds=[0],
+            base_train_cfg=train_cfg,
+            base_model_cfg=model_cfg,
+            log_steps=(5, 10, 20),
+            measures_steps=(10, 20),
+            skip_hessian=True,
+            on_train_log=on_train_log,
+            progress_interval_steps=7,
+            on_progress=heartbeat_steps.append,
+            on_measure_step=on_measure_step,
+        )
+
+        assert train_log_steps == [5, 10, 20]
+        assert heartbeat_steps == [7, 14]
+        assert measure_events == [(10, 1, 1), (20, 1, 2)]
+
+    def test_cli_resume_runs_only_missing_seeds(self, tmp_path):
+        out = tmp_path / "scan.parquet"
+        base_cmd = [
+            sys.executable,
+            "scripts/run_scan_instrumented.py",
+            "--group",
+            "A",
+            "--p",
+            "3",
+            "--alpha",
+            "0.5",
+            "--lambda",
+            "0.0",
+            "--T-min",
+            "2",
+            "--T-max",
+            "2",
+            "--measures-steps",
+            "1",
+            "2",
+            "--progress-interval-steps",
+            "0",
+            "--skip-hessian",
+            "--device",
+            "cpu",
+            "--out",
+            str(out),
+            "--quiet",
+        ]
+
+        subprocess.run([*base_cmd, "--n-seeds", "1"], check=True)
+        subprocess.run([*base_cmd, "--n-seeds", "2", "--resume"], check=True)
+
+        traj = pd.read_parquet(out)
+        cells = pd.read_parquet(out.with_suffix(".cells.parquet"))
+        assert len(cells) == 2
+        assert set(cells["seed"]) == {0, 1}
+        assert len(traj) == 4
+        assert not traj.duplicated(["alpha_idx", "lambda_idx", "seed", "step"]).any()
+
+        subprocess.run([*base_cmd, "--n-seeds", "1", "--resume"], check=True)
+        traj = pd.read_parquet(out)
+        cells = pd.read_parquet(out.with_suffix(".cells.parquet"))
+        assert len(cells) == 1
+        assert set(cells["seed"]) == {0}
+        assert len(traj) == 2
+        assert set(traj["seed"]) == {0}

@@ -11,6 +11,7 @@ trajectory density isn't needed everywhere.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Iterable, Optional
 
 from torch import Tensor
@@ -18,7 +19,7 @@ from torch import Tensor
 from ..data import TaskSpec, build_full_dataset, make_split
 from ..measures import compute_all_measures
 from ..model import MiniQwen, MiniQwenConfig
-from ..train.trainer import TrainConfig
+from ..train.trainer import StepLog, TrainConfig
 from .grid import GridCell
 from .multi_seed import train_multi_seed
 
@@ -67,6 +68,20 @@ def run_cell_with_measures(
     measures_steps: Optional[Iterable[int]] = None,
     skip_hessian: bool = False,
     hessian_iters: int = 10,
+    on_train_log: Callable[
+        [
+            int,
+            list[StepLog | None],
+            list[Optional[int]],
+            list[Optional[int]],
+            list[int],
+            list[bool],
+        ],
+        None,
+    ] | None = None,
+    progress_interval_steps: int | None = None,
+    on_progress: Callable[[int], None] | None = None,
+    on_measure_step: Callable[[int, int, int], None] | None = None,
 ) -> tuple[list, list[dict]]:
     """Run multi-seed training on a single cell, instrumented with measures.
 
@@ -75,6 +90,9 @@ def run_cell_with_measures(
         train_results: list[TrainResult] (one per seed)
         trajectory_rows: list[dict], each row keyed by (group, alpha_idx,
             lambda_idx, seed, step) with all measure values flattened in.
+        on_train_log: optional callback for checkpoint metrics.
+        progress_interval_steps/on_progress: optional lightweight heartbeat.
+        on_measure_step: optional callback as ``(step, new_rows, total_rows)``.
     """
     if not seeds:
         raise ValueError("seeds must be non-empty")
@@ -111,6 +129,7 @@ def run_cell_with_measures(
     def hook(step: int, params: dict, buffers: dict, _base: MiniQwen) -> None:
         if measures_steps_set is not None and step not in measures_steps_set:
             return
+        rows_before = len(rows)
         for i, sd in enumerate(seeds):
             model = unstack_seed(params, buffers, base_model_cfg, i, device=device)
             measures = compute_all_measures(
@@ -124,6 +143,8 @@ def run_cell_with_measures(
             )
             row = {**base_meta, "seed": sd, "step": step, **measures}
             rows.append(row)
+        if on_measure_step is not None:
+            on_measure_step(step, len(rows) - rows_before, len(rows))
 
     train_results = train_multi_seed(
         model_cfg=base_model_cfg,
@@ -135,6 +156,9 @@ def run_cell_with_measures(
         device=device,
         log_steps=log_steps,
         at_log_step_hook=hook,
+        on_log_step=on_train_log,
+        progress_interval_steps=progress_interval_steps,
+        on_progress=on_progress,
     )
     return train_results, rows
 
