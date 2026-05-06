@@ -163,9 +163,7 @@ def train_multi_seed(
     step = 0
     while step < T_cap and not all(stopped):
         # forward + backward (all seeds, even stopped ones — wasted but harmless)
-        for p in params.values():
-            if p.grad is not None:
-                p.grad = None
+        optimizer.zero_grad(set_to_none=True)
         logits = vfwd(params, buffers, train_tokens)
         loss_per_seed, _ = _per_seed_loss_acc(logits, train_tokens, spec.answer_pos)
         # sum across seeds: gradient on each seed slice == standalone backward

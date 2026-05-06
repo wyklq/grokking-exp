@@ -41,7 +41,9 @@ make test    # 全栈无回归（CPU 上数秒级）
 ```bash
 python3 scripts/train_one.py \
     --p 113 --alpha 0.3 --lambda 1.0 \
-    --T-min 100000 --T-max 1000000 --device cuda
+    --T-min 100000 --T-max 1000000 \
+    --matmul-precision high \
+    --device cuda
 ```
 
 **预期输出**：
@@ -71,6 +73,7 @@ python3 scripts/run_scan_instrumented.py \
     --n-seeds 1 \
     --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
     --progress-interval-steps 100000 \
+    --matmul-precision high \
     --skip-hessian \
     --device cuda \
     --out results/scans/A_p113_phase1.parquet
@@ -85,6 +88,7 @@ python3 scripts/run_scan_instrumented.py \
     --n-seeds 1 \
     --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
     --progress-interval-steps 100000 \
+    --matmul-precision high \
     --skip-hessian \
     --device cuda \
     --out results/scans/A_p113_phase1.parquet \
@@ -99,6 +103,8 @@ python3 scripts/run_scan_instrumented.py \
 - `[partial]`：每个 cell 完成后写一次 `*.partial.parquet`，中断也能保留已完成 cell。
 
 如果某个 cell 在 100k 还没达到训练阈值，adaptive-T 会继续跑到 500k、1M 甚至 5M；这时看到 heartbeat 但暂时没有 cell completion 是正常现象。
+
+`--matmul-precision high` 会启用 PyTorch 的 float32 matmul 精度/速度折中设置；在 NVIDIA GPU 上通常允许 TF32 路径，建议 GPU 扫描使用。若你要做严格数值对照，可去掉该参数恢复 PyTorch 默认。
 
 **预计耗时**（仅供参考，依赖 cell 实际收敛快慢）：
 
@@ -123,6 +129,7 @@ python3 scripts/run_scan_instrumented.py \
     --n-seeds 1 \
     --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
     --progress-interval-steps 100000 \
+    --matmul-precision high \
     --skip-hessian \
     --device cuda \
     --out results/scans/B_p113_phase1.parquet
@@ -137,6 +144,7 @@ python3 scripts/run_scan_instrumented.py \
     --n-seeds 1 \
     --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
     --progress-interval-steps 100000 \
+    --matmul-precision high \
     --skip-hessian \
     --device cuda \
     --out results/scans/B_p113_phase1.parquet \
@@ -158,6 +166,7 @@ python3 scripts/run_scan_instrumented.py \
     --n-seeds 1 \
     --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
     --progress-interval-steps 100000 \
+    --matmul-precision high \
     --skip-hessian \
     --device cuda \
     --out results/scans/C_p113_phase1.parquet
@@ -172,6 +181,7 @@ python3 scripts/run_scan_instrumented.py \
     --n-seeds 1 \
     --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
     --progress-interval-steps 100000 \
+    --matmul-precision high \
     --skip-hessian \
     --device cuda \
     --out results/scans/C_p113_phase1.parquet \
@@ -248,6 +258,7 @@ plt.scatter(last.fourier_sparsity, last.weight_norm_total,
 |---|---|
 | OOM | 当前实现是全批训练，p=113 → 12769 sample × 5 seq → ~64MB activations，4090 安全。如 OOM 检查是否同时跑了别的进程 |
 | 训练 loss NaN | 检查 lr 是否过大（`--lr 1e-4`）；Adam betas 不变 |
+| GPU 利用率偏低 | 小模型 full-batch 容易受 kernel/Python overhead 限制；确认命令含 `--matmul-precision high`，新版本在 CUDA 上使用 fused SDPA |
 | 全 cell phase=fail | T_min 不够，加大 `--T-min 500000` |
 | Phase 1 跑到一半中断 | 使用同一个 `--out` 加 `--resume`；脚本会读取 `*.partial.cells.parquet` 并跳过已完成 cells |
 | 长时间没有 cell completion | 看 `[cell ... progress]` heartbeat；通常是该 cell 自适应延长到 500k/1M/5M |

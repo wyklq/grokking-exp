@@ -20,6 +20,7 @@ from pathlib import Path
 
 from mqg.data import TaskSpec
 from mqg.model import MiniQwenConfig
+from mqg.perf import configure_matmul_precision
 from mqg.scan import (
     GridSpec,
     default_grid_spec,
@@ -55,6 +56,9 @@ def main() -> int:
     p.add_argument("--hessian-iters", type=int, default=10)
     p.add_argument("--out", type=str, default=None)
     p.add_argument("--device", type=str, default="cpu")
+    p.add_argument("--matmul-precision", choices=["highest", "high", "medium"], default=None,
+                   help="Optional torch float32 matmul precision. Use 'high' on NVIDIA GPUs "
+                        "to allow TF32 acceleration.")
     p.add_argument("--progress-interval-steps", type=int, default=100_000,
                    help="Emit a lightweight per-cell heartbeat every N training steps. "
                         "Use 0 to disable.")
@@ -76,6 +80,7 @@ def main() -> int:
         p.error("--hessian-iters must be >= 1")
     if args.progress_interval_steps < 0:
         p.error("--progress-interval-steps must be >= 0")
+    configure_matmul_precision(args.matmul_precision)
 
     split_strategy, tied = GROUP_PRESETS[args.group]
     spec = TaskSpec(p=args.p)
@@ -98,7 +103,8 @@ def main() -> int:
 
     if not args.quiet:
         log(f"[setup] group={args.group} split={split_strategy} tied={tied} "
-            f"p={args.p} grid={grid.shape} n_seeds={args.n_seeds}")
+            f"p={args.p} grid={grid.shape} n_seeds={args.n_seeds} "
+            f"matmul_precision={args.matmul_precision}")
         log(f"[setup] alphas={list(grid.alpha_values)}")
         log(f"[setup] lambdas={list(grid.lambda_values)}")
         if args.measures_steps:

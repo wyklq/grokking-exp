@@ -16,6 +16,7 @@ from pathlib import Path
 
 from mqg.data import TaskSpec
 from mqg.model import MiniQwenConfig
+from mqg.perf import configure_matmul_precision
 from mqg.scan import (
     GridSpec,
     default_grid_spec,
@@ -48,6 +49,9 @@ def main() -> int:
     p.add_argument("--split-seed", type=int, default=0)
     p.add_argument("--out", type=str, default=None)
     p.add_argument("--device", type=str, default="cpu")
+    p.add_argument("--matmul-precision", choices=["highest", "high", "medium"], default=None,
+                   help="Optional torch float32 matmul precision. Use 'high' on NVIDIA GPUs "
+                        "to allow TF32 acceleration.")
     p.add_argument("--skip-phase2", action="store_true")
     p.add_argument("--quiet", action="store_true")
     args = p.parse_args()
@@ -57,6 +61,7 @@ def main() -> int:
         p.error("--lambda requires at least one value when provided")
     if args.n_seeds < 1:
         p.error("--n-seeds must be >= 1")
+    configure_matmul_precision(args.matmul_precision)
 
     split_strategy, tied = GROUP_PRESETS[args.group]
     spec = TaskSpec(p=args.p)
@@ -76,7 +81,8 @@ def main() -> int:
     if not args.quiet:
         print(f"[setup] group={args.group} split={split_strategy} tied={tied} "
               f"p={args.p} grid={n_alpha}x{n_lambda} "
-              f"T_min={args.T_min} T_max={args.T_max}")
+              f"T_min={args.T_min} T_max={args.T_max} "
+              f"matmul_precision={args.matmul_precision}")
         print(f"[setup] alphas={list(grid.alpha_values)}")
         print(f"[setup] lambdas={list(grid.lambda_values)}")
 

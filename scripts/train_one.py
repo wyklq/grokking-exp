@@ -17,6 +17,7 @@ from pathlib import Path
 
 from mqg.data import TaskSpec, make_split
 from mqg.model import MiniQwenConfig
+from mqg.perf import configure_matmul_precision
 from mqg.train import TrainConfig, train_one_cell
 
 
@@ -34,6 +35,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--T-min", type=int, default=100_000)
     p.add_argument("--T-max", type=int, default=5_000_000)
     p.add_argument("--device", default="cpu")
+    p.add_argument("--matmul-precision", choices=["highest", "high", "medium"], default=None,
+                   help="Optional torch float32 matmul precision. Use 'high' on NVIDIA GPUs "
+                        "to allow TF32 acceleration.")
     p.add_argument("--out", type=Path, default=Path("results/single_cell"))
     p.add_argument("--quiet", action="store_true")
     return p.parse_args()
@@ -41,6 +45,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    configure_matmul_precision(args.matmul_precision)
 
     spec = TaskSpec(p=args.p, op=args.op)
     model_cfg = MiniQwenConfig(
@@ -59,7 +64,7 @@ def main() -> int:
     print(
         f"[setup] p={args.p} alpha={args.alpha} lambda={args.lam} split={args.split} "
         f"tied={args.tied} | train={len(train_idx)} test={len(test_idx)} "
-        f"vocab={spec.vocab_size}",
+        f"vocab={spec.vocab_size} matmul_precision={args.matmul_precision}",
         file=sys.stderr,
     )
 

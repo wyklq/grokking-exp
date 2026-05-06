@@ -34,3 +34,10 @@ def test_base_config_loads():
 
 def test_subpackages_importable():
     from mqg import model, data, train, measures, scan  # noqa: F401
+
+
+def test_configure_matmul_precision_accepts_none_and_high():
+    from mqg.perf import configure_matmul_precision
+
+    configure_matmul_precision(None)
+    configure_matmul_precision("high")

@@ -21,14 +21,15 @@ make test      # run full test suite
 
 **Single-cell run**:
 ```bash
-python3 scripts/train_one.py --p 113 --alpha 0.3 --lambda 1.0 --T-min 100000 --device cuda
+python3 scripts/train_one.py --p 113 --alpha 0.3 --lambda 1.0 \
+    --T-min 100000 --matmul-precision high --device cuda
 ```
 
 **Full instrumented scan** (one experimental group):
 ```bash
 python3 scripts/run_scan_instrumented.py --group B --p 113 --device cuda \
     --measures-steps 100 1000 10000 100000 1000000 \
-    --progress-interval-steps 100000 --skip-hessian
+    --progress-interval-steps 100000 --matmul-precision high --skip-hessian
 ```
 
 The instrumented scan emits per-cell checkpoint logs, lightweight heartbeats, and partial Parquet files so long GPU runs can be monitored and resumed. See `docs/GPU_GUIDE.md` for full command reference.

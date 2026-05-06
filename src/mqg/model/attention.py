@@ -53,7 +53,7 @@ class GQAAttention(nn.Module):
         self.scale = 1.0 / math.sqrt(head_dim)
 
     def forward(self, x: Tensor) -> Tensor:
-        B, S, _ = x.shape
+        _, S, _ = x.shape
 
         q = self.q_proj(x)  # (B, S, n_heads * head_dim)
         k = self.k_proj(x)  # (B, S, n_kv_heads * head_dim)
@@ -78,15 +78,15 @@ class GQAAttention(nn.Module):
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
 
-        # Scaled dot-product attention with causal mask
-        attn_scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
-        causal_mask = torch.triu(
-            torch.full((S, S), float("-inf"), device=x.device, dtype=attn_scores.dtype),
-            diagonal=1,
-        )
-        attn_scores = attn_scores + causal_mask
-        attn = F.softmax(attn_scores, dim=-1)
-
-        out = torch.matmul(attn, v)  # (B, H, S, D)
+        if q.is_cuda:
+            out = F.scaled_dot_product_attention(q, k, v, is_causal=True)  # (B, H, S, D)
+        else:
+            attn_scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
+            causal_mask = torch.triu(
+                torch.full((S, S), float("-inf"), device=x.device, dtype=attn_scores.dtype),
+                diagonal=1,
+            )
+            attn = F.softmax(attn_scores + causal_mask, dim=-1)
+            out = torch.matmul(attn, v)  # (B, H, S, D)
         out = rearrange(out, "b h s d -> b s (h d)")
         return self.o_proj(out)
