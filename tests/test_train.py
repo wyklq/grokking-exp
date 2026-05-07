@@ -11,6 +11,7 @@ from __future__ import annotations
 import pytest
 import torch
 
+import mqg.train.trainer as trainer_module
 from mqg.data import TaskSpec, make_split
 from mqg.model import MiniQwenConfig
 from mqg.train import (
@@ -150,6 +151,85 @@ class TestTrainerSmoke:
         # but t_test also met (acc >= 0.0 always) -> finishes around T_target
         assert result.t_train == 1
         assert result.t_test == 1
+
+    def test_adaptive_T_only_extends_once_without_train_acc(self):
+        """No-train cells should fail after one order-of-magnitude extension."""
+        spec = TaskSpec(p=7)
+        model_cfg = MiniQwenConfig(vocab_size=spec.vocab_size)
+        train_cfg = TrainConfig(
+            lr=1e-12,
+            weight_decay=0.0,
+            T_min=2,
+            T_max=50,
+            acc_threshold=1.0,
+            seed=0,
+        )
+        train_idx, test_idx = make_split("S1", spec, alpha=0.5, seed=0)
+        result = train_one_cell(
+            model_cfg=model_cfg,
+            train_cfg=train_cfg,
+            spec=spec,
+            train_idx=train_idx,
+            test_idx=test_idx,
+            log_steps=(2, 20, 50),
+        )
+        assert result.t_train is None
+        assert result.phase == "fail"
+        assert result.final_step == 20
+
+    def test_train_after_no_train_extension_stops_at_grok_target(self, monkeypatch):
+        """Late training accuracy still uses the grok target, not T_max."""
+        scripted_metrics = iter(
+            [
+                (1.0, 0.0),  # step 2 train
+                (1.0, 0.0),  # step 2 test
+                (1.0, 1.0),  # step 20 train: sets t_train and target=60
+                (1.0, 0.0),  # step 20 test
+                (1.0, 1.0),  # step 60 train
+                (1.0, 0.0),  # step 60 test: no t_test, so stop as memorize
+            ]
+        )
+
+        def scripted_evaluate(*_args, **_kwargs):
+            return next(scripted_metrics)
+
+        monkeypatch.setattr(trainer_module, "evaluate", scripted_evaluate)
+
+        spec = TaskSpec(p=5)
+        model_cfg = MiniQwenConfig(
+            vocab_size=spec.vocab_size,
+            d_model=8,
+            n_layers=1,
+            n_heads=1,
+            head_dim=8,
+            n_kv_heads=1,
+            ffn_hidden=16,
+        )
+        train_cfg = TrainConfig(
+            lr=1e-3,
+            weight_decay=0.0,
+            T_min=2,
+            T_max=80,
+            grok_extension_factor=3,
+            acc_threshold=0.99,
+            seed=0,
+        )
+        train_idx, test_idx = make_split("S1", spec, alpha=0.5, seed=0)
+
+        result = train_one_cell(
+            model_cfg=model_cfg,
+            train_cfg=train_cfg,
+            spec=spec,
+            train_idx=train_idx,
+            test_idx=test_idx,
+            log_steps=(2, 20, 60, 80),
+        )
+
+        assert result.t_train == 20
+        assert result.t_test is None
+        assert result.phase == "memorize"
+        assert result.final_step == 60
+        assert [entry.step for entry in result.history] == [2, 20, 60]
 
     def test_model_task_vocab_mismatch_raises(self):
         spec = TaskSpec(p=5)

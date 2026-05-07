@@ -10,6 +10,8 @@ from dataclasses import dataclass
 
 import math
 
+DEFAULT_LAMBDA_HI = 10 ** 0.5
+
 
 @dataclass(frozen=True)
 class GridCell:
@@ -57,7 +59,11 @@ def default_alpha_grid(n: int = 9) -> tuple[float, ...]:
     return tuple(round(0.1 + 0.8 * k / (n - 1), 4) for k in range(n))
 
 
-def default_lambda_grid(n: int = 7, lo: float = 1e-2, hi: float = 1e1) -> tuple[float, ...]:
+def default_lambda_grid(
+    n: int = 6,
+    lo: float = 1e-2,
+    hi: float = DEFAULT_LAMBDA_HI,
+) -> tuple[float, ...]:
     """Log-uniform between lo and hi."""
     if n < 2:
         raise ValueError(f"lambda grid size must be >= 2, got {n}")

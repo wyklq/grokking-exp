@@ -27,14 +27,19 @@ class TestGrid:
         assert min(a) == 0.1 and max(a) == 0.9
 
     def test_default_lambda_logspace(self):
-        lams = default_lambda_grid(7, 1e-2, 1e1)
-        assert len(lams) == 7
+        lams = default_lambda_grid()
+        assert len(lams) == 6
         assert abs(lams[0] - 1e-2) < 1e-6
-        assert abs(lams[-1] - 1e1) < 1e-3
+        assert abs(lams[-1] - 10 ** 0.5) < 1e-3
         # Check log spacing: ratio between consecutive values should be roughly constant
         ratios = [lams[i + 1] / lams[i] for i in range(len(lams) - 1)]
         for r in ratios:
             assert abs(r - ratios[0]) / ratios[0] < 1e-3
+
+    def test_explicit_lambda_grid_can_include_10(self):
+        lams = default_lambda_grid(7, 1e-2, 1e1)
+        assert len(lams) == 7
+        assert abs(lams[-1] - 1e1) < 1e-3
 
     def test_grid_cells_count(self):
         g = GridSpec(alpha_values=(0.1, 0.5, 0.9), lambda_values=(0.01, 1.0))
@@ -46,8 +51,8 @@ class TestGrid:
 
     def test_default_grid(self):
         g = default_grid_spec()
-        assert g.shape == (9, 7)
-        assert len(g.cells()) == 63
+        assert g.shape == (9, 6)
+        assert len(g.cells()) == 54
 
     def test_invalid_grid_rejected(self):
         with pytest.raises(ValueError, match="alpha_values"):
@@ -175,6 +180,22 @@ class TestMultiSeed:
         spec, mcfg, tcfg, tr, te = self._make()
         with pytest.raises(ValueError, match="seeds"):
             train_multi_seed(mcfg, tcfg, spec, tr, te, seeds=[])
+
+    def test_no_train_extends_once_only(self):
+        spec, mcfg, _tcfg, tr, te = self._make(p=7)
+        tcfg = TrainConfig(lr=1e-12, weight_decay=0.0, T_min=2, T_max=50, acc_threshold=1.0)
+        result = train_multi_seed(
+            mcfg,
+            tcfg,
+            spec,
+            tr,
+            te,
+            seeds=[0],
+            log_steps=(2, 20, 50),
+        )[0]
+        assert result.t_train is None
+        assert result.phase == "fail"
+        assert result.final_step == 20
 
 
 # ---------------- scan_runner ----------------

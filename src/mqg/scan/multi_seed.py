@@ -156,6 +156,7 @@ def train_multi_seed(
     final_step: list[int] = [0] * N
     T_target: list[int] = [train_cfg.T_min] * N
     stopped: list[bool] = [False] * N
+    extended_without_train: list[bool] = [False] * N
 
     log_iter = LogStepIterator(log_steps) if log_steps is not None else LogStepIterator()
     T_cap = train_cfg.T_max
@@ -206,8 +207,13 @@ def train_multi_seed(
                 if t_train[i] is not None and t_test[i] is not None and step >= T_target[i]:
                     stopped[i] = True
                 elif step >= T_target[i]:
-                    if t_train[i] is None and T_target[i] < T_cap:
+                    if (
+                        t_train[i] is None
+                        and not extended_without_train[i]
+                        and T_target[i] < T_cap
+                    ):
                         T_target[i] = min(T_cap, T_target[i] * 10)
+                        extended_without_train[i] = True
                     else:
                         stopped[i] = True
 

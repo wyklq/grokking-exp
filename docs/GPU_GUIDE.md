@@ -64,7 +64,7 @@ python3 scripts/train_one.py \
 
 ## 3. Group A 主扫描（baseline：S1 + tied embedding）
 
-**完整扫描**（9×7=63 cells，每 cell 1 seed，推荐命令）：
+**完整扫描**（9×6=54 cells，每 cell 1 seed，推荐命令）：
 
 ```bash
 python3 scripts/run_scan_instrumented.py \
@@ -102,7 +102,9 @@ python3 scripts/run_scan_instrumented.py \
 - `[cell ... measures]`：该 step 已写入多少条 progress-measure row。
 - `[partial]`：每个 cell 完成后写一次 `*.partial.parquet`，中断也能保留已完成 cell。
 
-如果某个 cell 在 100k 还没达到训练阈值，adaptive-T 会继续跑到 500k、1M 甚至 5M；这时看到 heartbeat 但暂时没有 cell completion 是正常现象。
+如果某个 cell 在 100k 还没达到训练阈值，adaptive-T 只会再扩展一个数量级到 1M；若仍未达到训练阈值就判为 `fail`，避免强正则 cell 拖到 5M。
+
+默认 lambda grid 已移除 `lambda=10`，因为 Blackwell 实测该列在 Group A 中反复无法达到训练阈值，且会占用绝大部分 wall-clock。需要探索极强 weight decay 时，可显式追加：`--lambda 0.01 0.031623 0.1 0.316228 1.0 3.162278 10.0`。
 
 `--matmul-precision high` 会启用 PyTorch 的 float32 matmul 精度/速度折中设置；在 NVIDIA GPU 上通常允许 TF32 路径，建议 GPU 扫描使用。若你要做严格数值对照，可去掉该参数恢复 PyTorch 默认。
 
@@ -110,7 +112,7 @@ python3 scripts/run_scan_instrumented.py \
 
 | GPU | 估算 |
 |---|---|
-| Blackwell 32GB | 低 alpha memorize cell 约 5–6 分钟；完整 63 cell 至少数小时，hard/fail cell 可能显著更久 |
+| Blackwell 32GB | 低 alpha memorize cell 约 5–6 分钟；默认 54-cell scan 避开 `lambda=10` 后应显著快于原 63-cell grid |
 | RTX 4090 24GB | 预计同量级或稍慢 |
 | A100/H100 | 取决于小模型 full-batch 利用率，不能只按 FLOPS 线性估算 |
 
@@ -261,7 +263,7 @@ plt.scatter(last.fourier_sparsity, last.weight_norm_total,
 | GPU 利用率偏低 | 小模型 full-batch 容易受 kernel/Python overhead 限制；确认命令含 `--matmul-precision high`，新版本在 CUDA 上使用 fused SDPA |
 | 全 cell phase=fail | T_min 不够，加大 `--T-min 500000` |
 | Phase 1 跑到一半中断 | 使用同一个 `--out` 加 `--resume`；脚本会读取 `*.partial.cells.parquet` 并跳过已完成 cells |
-| 长时间没有 cell completion | 看 `[cell ... progress]` heartbeat；通常是该 cell 自适应延长到 500k/1M/5M |
+| 长时间没有 cell completion | 看 `[cell ... progress]` heartbeat；如果该 cell 是显式 `lambda=10`，通常是强 weight decay 阻止 memorization |
 | Hessian 收敛慢 / 不稳定 | `--hessian-iters 30`（默认 10），或继续 `--skip-hessian` |
 | Parquet 读不出 | 确保 `pip install pyarrow`，且 Python ≥ 3.10 |
 | 结果与论文 Liu et al. 2022 相图不一致 | 我们用 ~93k 参数 mini-Qwen，他们用 ~10k 参数 MLP；定性应一致（4 区拓扑），定量边界不同 |

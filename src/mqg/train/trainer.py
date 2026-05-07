@@ -159,6 +159,7 @@ def train_one_cell(
     # Adaptive T bookkeeping
     T_target = train_cfg.T_min
     T_cap = train_cfg.T_max
+    extended_without_train = False
 
     step = 0
     while step < T_cap:
@@ -193,9 +194,10 @@ def train_one_cell(
             if t_train is not None and t_test is not None and step >= T_target:
                 break
             if step >= T_target:
-                if t_train is None and T_target < T_cap:
+                if t_train is None and not extended_without_train and T_target < T_cap:
                     # Extend by one order of magnitude
                     T_target = min(T_cap, T_target * 10)
+                    extended_without_train = True
                 else:
                     break
 

@@ -32,7 +32,7 @@ python3 scripts/run_scan_instrumented.py --group B --p 113 --device cuda \
     --progress-interval-steps 100000 --matmul-precision high --skip-hessian
 ```
 
-The instrumented scan emits per-cell checkpoint logs, lightweight heartbeats, and partial Parquet files so long GPU runs can be monitored and resumed. See `docs/GPU_GUIDE.md` for full command reference.
+The default scan uses a 9×6 grid that excludes the costly `lambda=10` stress column. The instrumented scan emits per-cell checkpoint logs, lightweight heartbeats, and partial Parquet files so long GPU runs can be monitored and resumed. See `docs/GPU_GUIDE.md` for full command reference.
 
 ## Layout
 
