@@ -1,0 +1,5 @@
+experiment_id,checkpoint_tag,group,tied,alpha,lambda,baseline_test_acc,top10_freqs,embedding_keep_dc_top10_test_acc,embedding_remove_top10_test_acc,lm_head_keep_dc_top10_test_acc,lm_head_remove_top10_test_acc,both_keep_dc_top10_test_acc,both_remove_top10_test_acc,chance_accuracy
+B_weakev_comp_a0p2_lam1,B_weakev_comp_a0p2_lam1_seed0,B,True,0.2,1.0,0.9996066863323501,"38,40,30,41,56,18,26,10,17,53",0.8783677482792527,0.07305801376597837,,,,,0.008849557522123894
+B_grok_boundary_a0p4_lam0p01,B_grok_boundary_a0p4_lam0p01_seed0,B,True,0.4,0.01,1.0,"41,30,27,18,31,36,14,53,52,56",0.9793076522644456,0.009370119729307652,,,,,0.008849557522123894
+B_memorize_fourier_control_a0p1_lam0p316228,B_memorize_fourier_control_a0p1_lam0p316228_seed0,B,True,0.1,0.316228,0.9862051015096304,"44,47,39,33,12,35,32,5,25,21",0.9158424431719591,0.032014575741801145,,,,,0.008849557522123894
+C_strong_ref_a0p7_lam0p031623,C_strong_ref_a0p7_lam0p031623_seed0,C,False,0.7,0.031623,1.0,"5,23,46,21,10,15,33,25,56,20",1.0,0.008328995314940135,0.9950546590317543,1.0,0.9945340968245705,0.009370119729307652,0.008849557522123894

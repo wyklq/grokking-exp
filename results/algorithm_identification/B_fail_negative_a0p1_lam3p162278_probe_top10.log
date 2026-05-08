@@ -1,0 +1,5 @@
+[saved] results/algorithm_identification/B_fail_negative_a0p1_lam3p162278_probe_top10.json
+[saved] results/algorithm_identification/B_fail_negative_a0p1_lam3p162278_probe_top10.accuracy.png
+[baseline] train_acc=0.9179 test_acc=0.1502
+[freqs] [5, 39, 33, 11, 44, 10, 49, 25, 38, 35]
+[triadic_fft] additive_line_fraction=0.0707

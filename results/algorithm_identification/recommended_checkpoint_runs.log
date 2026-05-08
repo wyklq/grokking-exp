@@ -1,0 +1,122 @@
+[2026-05-08 06:48:49] Loaded manifest: results/algorithm_identification/recommended_checkpoint_groups.json with 4 groups
+[2026-05-08 06:48:49] === GROUP 1/4 B_weakev_comp_a0p2_lam1 ===
+[2026-05-08 06:48:49] BEGIN B_weakev_comp_a0p2_lam1 train: .venv/bin/python scripts/train_checkpoint.py --group B --p 113 --alpha 0.2 --lambda 1.0 --T-min 100000 --T-max 100000 --device cuda --matmul-precision high --tag B_weakev_comp_a0p2_lam1_seed0
+[setup] group=B split=S3 tied=True p=113 alpha=0.2 lambda=1 seed=0 train=2599 test=10170 device=cuda matmul_precision=high
+[log] step=100 train_loss=1.7072 train_acc=0.7938 test_loss=2.9171 test_acc=0.3279 T_target=100,000
+[log] step=200 train_loss=0.3798 train_acc=0.9931 test_loss=1.4431 test_acc=0.7197 T_target=100,000
+[log] step=500 train_loss=0.0441 train_acc=1.0000 test_loss=0.2685 test_acc=0.9699 T_target=100,000
+[log] step=1,000 train_loss=0.0109 train_acc=1.0000 test_loss=0.0353 test_acc=0.9982 T_target=100,000
+[log] step=2,000 train_loss=0.1169 train_acc=0.9923 test_loss=0.3026 test_acc=0.9365 T_target=100,000
+[log] step=5,000 train_loss=0.1953 train_acc=0.9546 test_loss=0.4598 test_acc=0.8743 T_target=100,000
+[log] step=10,000 train_loss=0.0282 train_acc=0.9988 test_loss=0.1808 test_acc=0.9562 T_target=100,000
+[log] step=20,000 train_loss=0.0015 train_acc=1.0000 test_loss=0.0023 test_acc=1.0000 T_target=100,000
+[progress] step=30,000/100,000 T_target=100,000 rate=382.1 step/s
+[progress] step=40,000/100,000 T_target=100,000 rate=387.5 step/s
+[log] step=50,000 train_loss=0.0012 train_acc=1.0000 test_loss=0.0015 test_acc=1.0000 T_target=100,000
+[progress] step=60,000/100,000 T_target=100,000 rate=392.7 step/s
+[progress] step=70,000/100,000 T_target=100,000 rate=394.4 step/s
+[progress] step=80,000/100,000 T_target=100,000 rate=394.4 step/s
+[progress] step=90,000/100,000 T_target=100,000 rate=395.2 step/s
+[log] step=100,000 train_loss=0.0036 train_acc=1.0000 test_loss=0.0151 test_acc=0.9996 T_target=100,000
+[result] phase=comprehend t_train=200 t_test=1000 final_step=100,000 wall=253.3s
+[saved] results/checkpoints/B_weakev_comp_a0p2_lam1_seed0.pt
+[saved] results/checkpoints/B_weakev_comp_a0p2_lam1_seed0.json
+[2026-05-08 06:53:03] END B_weakev_comp_a0p2_lam1 train: exit_code=0 elapsed_seconds=254.4
+[2026-05-08 06:53:03] BEGIN B_weakev_comp_a0p2_lam1 probe: .venv/bin/python scripts/probe_fourier_checkpoint.py --checkpoint results/checkpoints/B_weakev_comp_a0p2_lam1_seed0.pt --out results/algorithm_identification/B_weakev_comp_a0p2_lam1_probe_top10.json --p 113 --split S3 --alpha 0.2 --tied --top-k-pairs 10 --device cuda
+[saved] results/algorithm_identification/B_weakev_comp_a0p2_lam1_probe_top10.json
+[saved] results/algorithm_identification/B_weakev_comp_a0p2_lam1_probe_top10.accuracy.png
+[baseline] train_acc=1.0000 test_acc=0.9996
+[freqs] [38, 40, 30, 41, 56, 18, 26, 10, 17, 53]
+[triadic_fft] additive_line_fraction=0.6454
+[2026-05-08 06:53:06] END B_weakev_comp_a0p2_lam1 probe: exit_code=0 elapsed_seconds=2.8
+[2026-05-08 06:53:06] === GROUP 2/4 B_grok_boundary_a0p4_lam0p01 ===
+[2026-05-08 06:53:06] BEGIN B_grok_boundary_a0p4_lam0p01 train: .venv/bin/python scripts/train_checkpoint.py --group B --p 113 --alpha 0.4 --lambda 0.01 --T-min 100000 --T-max 100000 --device cuda --matmul-precision high --tag B_grok_boundary_a0p4_lam0p01_seed0
+[setup] group=B split=S3 tied=True p=113 alpha=0.4 lambda=0.01 seed=0 train=5085 test=7684 device=cuda matmul_precision=high
+[log] step=100 train_loss=1.7317 train_acc=0.9351 test_loss=2.0426 test_acc=0.7747 T_target=100,000
+[log] step=200 train_loss=0.2641 train_acc=0.9998 test_loss=0.4181 test_acc=0.9836 T_target=100,000
+[log] step=500 train_loss=0.0084 train_acc=1.0000 test_loss=0.0533 test_acc=0.9906 T_target=100,000
+[log] step=1,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0148 test_acc=0.9952 T_target=100,000
+[log] step=2,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0449 test_acc=0.9869 T_target=100,000
+[log] step=5,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0023 test_acc=0.9992 T_target=100,000
+[log] step=10,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0214 test_acc=0.9945 T_target=100,000
+[log] step=20,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.1792 test_acc=0.9632 T_target=100,000
+[progress] step=30,000/100,000 T_target=100,000 rate=232.6 step/s
+[progress] step=40,000/100,000 T_target=100,000 rate=233.5 step/s
+[log] step=50,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0008 test_acc=0.9996 T_target=100,000
+[progress] step=60,000/100,000 T_target=100,000 rate=234.3 step/s
+[progress] step=70,000/100,000 T_target=100,000 rate=234.6 step/s
+[progress] step=80,000/100,000 T_target=100,000 rate=234.7 step/s
+[progress] step=90,000/100,000 T_target=100,000 rate=234.9 step/s
+[log] step=100,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0000 test_acc=1.0000 T_target=100,000
+[result] phase=comprehend t_train=200 t_test=500 final_step=100,000 wall=425.5s
+[saved] results/checkpoints/B_grok_boundary_a0p4_lam0p01_seed0.pt
+[saved] results/checkpoints/B_grok_boundary_a0p4_lam0p01_seed0.json
+[2026-05-08 07:00:12] END B_grok_boundary_a0p4_lam0p01 train: exit_code=0 elapsed_seconds=426.6
+[2026-05-08 07:00:12] BEGIN B_grok_boundary_a0p4_lam0p01 probe: .venv/bin/python scripts/probe_fourier_checkpoint.py --checkpoint results/checkpoints/B_grok_boundary_a0p4_lam0p01_seed0.pt --out results/algorithm_identification/B_grok_boundary_a0p4_lam0p01_probe_top10.json --p 113 --split S3 --alpha 0.4 --tied --top-k-pairs 10 --device cuda
+[saved] results/algorithm_identification/B_grok_boundary_a0p4_lam0p01_probe_top10.json
+[saved] results/algorithm_identification/B_grok_boundary_a0p4_lam0p01_probe_top10.accuracy.png
+[baseline] train_acc=1.0000 test_acc=1.0000
+[freqs] [41, 30, 27, 18, 31, 36, 14, 53, 52, 56]
+[triadic_fft] additive_line_fraction=0.4149
+[2026-05-08 07:00:15] END B_grok_boundary_a0p4_lam0p01 probe: exit_code=0 elapsed_seconds=2.8
+[2026-05-08 07:00:15] === GROUP 3/4 B_memorize_fourier_control_a0p1_lam0p316228 ===
+[2026-05-08 07:00:15] BEGIN B_memorize_fourier_control_a0p1_lam0p316228 train: .venv/bin/python scripts/train_checkpoint.py --group B --p 113 --alpha 0.1 --lambda 0.316228 --T-min 100000 --T-max 100000 --device cuda --matmul-precision high --tag B_memorize_fourier_control_a0p1_lam0p316228_seed0
+[setup] group=B split=S3 tied=True p=113 alpha=0.1 lambda=0.316228 seed=0 train=1243 test=11526 device=cuda matmul_precision=high
+[log] step=100 train_loss=1.0376 train_acc=0.9139 test_loss=4.2230 test_acc=0.1583 T_target=100,000
+[log] step=200 train_loss=0.1880 train_acc=1.0000 test_loss=4.5941 test_acc=0.1721 T_target=100,000
+[log] step=500 train_loss=0.0121 train_acc=1.0000 test_loss=5.3428 test_acc=0.1769 T_target=100,000
+[log] step=1,000 train_loss=0.0002 train_acc=1.0000 test_loss=6.9214 test_acc=0.1599 T_target=100,000
+[log] step=2,000 train_loss=0.0000 train_acc=1.0000 test_loss=7.7759 test_acc=0.1785 T_target=100,000
+[log] step=5,000 train_loss=0.0001 train_acc=1.0000 test_loss=4.4238 test_acc=0.3204 T_target=100,000
+[log] step=10,000 train_loss=0.0008 train_acc=1.0000 test_loss=3.5840 test_acc=0.3747 T_target=100,000
+[log] step=20,000 train_loss=0.0002 train_acc=1.0000 test_loss=0.8339 test_acc=0.7965 T_target=100,000
+[progress] step=30,000/100,000 T_target=100,000 rate=370.9 step/s
+[progress] step=40,000/100,000 T_target=100,000 rate=376.8 step/s
+[log] step=50,000 train_loss=0.0062 train_acc=1.0000 test_loss=0.9028 test_acc=0.7597 T_target=100,000
+[progress] step=60,000/100,000 T_target=100,000 rate=378.9 step/s
+[progress] step=70,000/100,000 T_target=100,000 rate=381.3 step/s
+[progress] step=80,000/100,000 T_target=100,000 rate=383.3 step/s
+[progress] step=90,000/100,000 T_target=100,000 rate=385.0 step/s
+[log] step=100,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0490 test_acc=0.9863 T_target=100,000
+[result] phase=memorize t_train=200 t_test=None final_step=100,000 wall=258.4s
+[saved] results/checkpoints/B_memorize_fourier_control_a0p1_lam0p316228_seed0.pt
+[saved] results/checkpoints/B_memorize_fourier_control_a0p1_lam0p316228_seed0.json
+[2026-05-08 07:04:35] END B_memorize_fourier_control_a0p1_lam0p316228 train: exit_code=0 elapsed_seconds=259.5
+[2026-05-08 07:04:35] BEGIN B_memorize_fourier_control_a0p1_lam0p316228 probe: .venv/bin/python scripts/probe_fourier_checkpoint.py --checkpoint results/checkpoints/B_memorize_fourier_control_a0p1_lam0p316228_seed0.pt --out results/algorithm_identification/B_memorize_fourier_control_a0p1_lam0p316228_probe_top10.json --p 113 --split S3 --alpha 0.1 --tied --top-k-pairs 10 --device cuda
+[saved] results/algorithm_identification/B_memorize_fourier_control_a0p1_lam0p316228_probe_top10.json
+[saved] results/algorithm_identification/B_memorize_fourier_control_a0p1_lam0p316228_probe_top10.accuracy.png
+[baseline] train_acc=1.0000 test_acc=0.9862
+[freqs] [44, 47, 39, 33, 12, 35, 32, 5, 25, 21]
+[triadic_fft] additive_line_fraction=0.4882
+[2026-05-08 07:04:38] END B_memorize_fourier_control_a0p1_lam0p316228 probe: exit_code=0 elapsed_seconds=2.8
+[2026-05-08 07:04:38] === GROUP 4/4 C_strong_ref_a0p7_lam0p031623 ===
+[2026-05-08 07:04:38] BEGIN C_strong_ref_a0p7_lam0p031623 train: .venv/bin/python scripts/train_checkpoint.py --group C --p 113 --alpha 0.7 --lambda 0.031623 --T-min 100000 --T-max 100000 --device cuda --matmul-precision high --tag C_strong_ref_a0p7_lam0p031623_seed0
+[setup] group=C split=S3 tied=False p=113 alpha=0.7 lambda=0.031623 seed=0 train=8927 test=3842 device=cuda matmul_precision=high
+[log] step=100 train_loss=3.0763 train_acc=0.2705 test_loss=3.1167 test_acc=0.1335 T_target=100,000
+[log] step=200 train_loss=2.4774 train_acc=0.2264 test_loss=2.5286 test_acc=0.1895 T_target=100,000
+[log] step=500 train_loss=0.3850 train_acc=0.9730 test_loss=0.5865 test_acc=0.8803 T_target=100,000
+[log] step=1,000 train_loss=0.0182 train_acc=0.9999 test_loss=0.0533 test_acc=0.9956 T_target=100,000
+[log] step=2,000 train_loss=0.0008 train_acc=1.0000 test_loss=0.0015 test_acc=0.9997 T_target=100,000
+[log] step=5,000 train_loss=0.0029 train_acc=1.0000 test_loss=0.0042 test_acc=1.0000 T_target=100,000
+[log] step=10,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0000 test_acc=1.0000 T_target=100,000
+[log] step=20,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0000 test_acc=1.0000 T_target=100,000
+[progress] step=30,000/100,000 T_target=100,000 rate=136.5 step/s
+[progress] step=40,000/100,000 T_target=100,000 rate=136.7 step/s
+[log] step=50,000 train_loss=0.0014 train_acc=1.0000 test_loss=0.0020 test_acc=1.0000 T_target=100,000
+[progress] step=60,000/100,000 T_target=100,000 rate=136.9 step/s
+[progress] step=70,000/100,000 T_target=100,000 rate=137.0 step/s
+[progress] step=80,000/100,000 T_target=100,000 rate=137.1 step/s
+[progress] step=90,000/100,000 T_target=100,000 rate=137.1 step/s
+[log] step=100,000 train_loss=0.0000 train_acc=1.0000 test_loss=0.0000 test_acc=1.0000 T_target=100,000
+[result] phase=comprehend t_train=1000 t_test=1000 final_step=100,000 wall=729.3s
+[saved] results/checkpoints/C_strong_ref_a0p7_lam0p031623_seed0.pt
+[saved] results/checkpoints/C_strong_ref_a0p7_lam0p031623_seed0.json
+[2026-05-08 07:16:48] END C_strong_ref_a0p7_lam0p031623 train: exit_code=0 elapsed_seconds=730.3
+[2026-05-08 07:16:48] BEGIN C_strong_ref_a0p7_lam0p031623 probe: .venv/bin/python scripts/probe_fourier_checkpoint.py --checkpoint results/checkpoints/C_strong_ref_a0p7_lam0p031623_seed0.pt --out results/algorithm_identification/C_strong_ref_a0p7_lam0p031623_probe_top10.json --p 113 --split S3 --alpha 0.7 --no-tied --top-k-pairs 10 --device cuda
+[saved] results/algorithm_identification/C_strong_ref_a0p7_lam0p031623_probe_top10.json
+[saved] results/algorithm_identification/C_strong_ref_a0p7_lam0p031623_probe_top10.accuracy.png
+[baseline] train_acc=1.0000 test_acc=1.0000
+[freqs] [5, 23, 46, 21, 10, 15, 33, 25, 56, 20]
+[triadic_fft] additive_line_fraction=0.8387
+[2026-05-08 07:16:51] END C_strong_ref_a0p7_lam0p031623 probe: exit_code=0 elapsed_seconds=2.8
+[2026-05-08 07:16:51] All recommended checkpoint training/probe commands completed successfully

@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-05-08",
+  "preserve_dc_in_keep": true,
+  "summary": {
+    "experiment_id": "B_fail_negative_a0p1_lam3p162278",
+    "checkpoint_tag": "B_fail_negative_a0p1_lam3p162278_seed0",
+    "group": "B",
+    "split": "S3",
+    "tied": true,
+    "alpha": 0.1,
+    "lambda": 3.162278,
+    "trained_phase": "fail",
+    "t_train": null,
+    "t_test": null,
+    "final_step": 1000000,
+    "wall_seconds": 2429.4,
+    "final_train_acc": 0.9179404973983765,
+    "final_test_acc": 0.15018218755722046,
+    "probe_train_acc": 0.917940466613033,
+    "probe_test_acc": 0.15018219677251432,
+    "top10_freqs": "5,39,33,11,44,10,49,25,38,35",
+    "raw_embedding_keep_top10_test_acc": 0.09786569495054659,
+    "embedding_keep_dc_top10_test_acc": 0.13074787437098734,
+    "embedding_remove_top10_test_acc": 0.012840534443866042,
+    "additive_line_fraction": 0.07070133090019226,
+    "top12_additive_modes": 6,
+    "chance_accuracy": 0.008849557522123894
+  },
+  "variants": [
+    {
+      "variant": "baseline",
+      "train_acc": 0.917940466613033,
+      "test_acc": 0.15018219677251432,
+      "train_loss": 0.857611020150342,
+      "test_loss": 4.061386942429073
+    },
+    {
+      "variant": "embedding_keep_dc_top10",
+      "train_acc": 0.37811745776347544,
+      "test_acc": 0.13074787437098734,
+      "train_loss": 3.778614145464602,
+      "test_loss": 4.288437893132917
+    },
+    {
+      "variant": "embedding_remove_top10",
+      "train_acc": 0.010458567980691875,
+      "test_acc": 0.012840534443866042,
+      "train_loss": 4.945140442729284,
+      "test_loss": 4.812147366551709
+    }
+  ],
+  "raw_probe": "results/algorithm_identification/B_fail_negative_a0p1_lam3p162278_probe_top10.json"
+}

@@ -1,0 +1,21 @@
+{
+  "p": 113,
+  "trajectory_files": [
+    "results/scans/A_p113_phase1.partial.parquet",
+    "results/scans/B_p113_phase1.partial.parquet",
+    "results/scans/C_p113_phase1.parquet"
+  ],
+  "cell_files": [
+    "results/scans/A_p113_phase1.partial.cells.parquet",
+    "results/scans/B_p113_phase1.partial.cells.parquet",
+    "results/scans/C_p113_phase1.cells.parquet"
+  ],
+  "n_final_rows": 95,
+  "n_cell_rows": 95,
+  "score_formula": {
+    "sparsity_component": "clip((fourier_sparsity - 0.30) / 0.55, 0, 1)",
+    "circularity_component": "clip((0.55 - circularity_top_freq) / 0.45, 0, 1)",
+    "trend_component": "clip((delta_fourier_sparsity + 0.05) / 0.65, 0, 1)",
+    "fourier_score": "100*(0.55*sparsity + 0.35*circularity + 0.10*trend)"
+  }
+}

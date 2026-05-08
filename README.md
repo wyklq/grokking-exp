@@ -61,5 +61,3 @@ results/          # Scan outputs (gitignored)
 | 5a. 8 progress measures | ✅ |
 | 5b. Instrumented scan + Parquet output | ✅ |
 | 6. GPU experiments + figures + paper | ⏳ — see GPU_GUIDE.md |
-
-See `task_plan.md` (in Obsidian vault under `AI-Chats/plans/mini-qwen-grokking/`) for detailed phase breakdown.

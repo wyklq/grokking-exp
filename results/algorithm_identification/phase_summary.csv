@@ -1,0 +1,13 @@
+group,phase,n_cells
+A,fail,2
+A,memorize,16
+A,grok,1
+A,comprehend,1
+B,fail,1
+B,memorize,6
+B,grok,2
+B,comprehend,12
+C,fail,2
+C,memorize,13
+C,grok,8
+C,comprehend,31

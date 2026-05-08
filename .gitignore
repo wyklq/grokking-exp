@@ -13,12 +13,9 @@ dist/
 .idea/
 
 # Results / artefacts (large)
-results/
 wandb/
 outputs/
-*.parquet
 *.ckpt
-*.pt
 !tests/**/*.pt
 
 # OS

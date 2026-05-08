@@ -1,0 +1,110 @@
+[setup] group=B split=S3 tied=True p=113 alpha=0.1 lambda=3.16228 seed=0 train=1243 test=11526 device=cuda matmul_precision=high
+[log] step=100 train_loss=1.9603 train_acc=0.9059 test_loss=3.9537 test_acc=0.1883 T_target=100,000
+[log] step=200 train_loss=1.1833 train_acc=0.9083 test_loss=3.5868 test_acc=0.2654 T_target=100,000
+[log] step=500 train_loss=0.8548 train_acc=0.9123 test_loss=2.5939 test_acc=0.4524 T_target=100,000
+[log] step=1,000 train_loss=0.8735 train_acc=0.9195 test_loss=1.9578 test_acc=0.6668 T_target=100,000
+[log] step=2,000 train_loss=0.8580 train_acc=0.9155 test_loss=1.7136 test_acc=0.7612 T_target=100,000
+[log] step=5,000 train_loss=0.8452 train_acc=0.9115 test_loss=2.5908 test_acc=0.4861 T_target=100,000
+[log] step=10,000 train_loss=0.8777 train_acc=0.9059 test_loss=3.7568 test_acc=0.2142 T_target=100,000
+[log] step=20,000 train_loss=0.8516 train_acc=0.9187 test_loss=4.0860 test_acc=0.1597 T_target=100,000
+[progress] step=30,000/1,000,000 T_target=100,000 rate=384.7 step/s
+[progress] step=40,000/1,000,000 T_target=100,000 rate=391.5 step/s
+[log] step=50,000 train_loss=0.8400 train_acc=0.9155 test_loss=3.9936 test_acc=0.1727 T_target=100,000
+[progress] step=60,000/1,000,000 T_target=100,000 rate=391.5 step/s
+[progress] step=70,000/1,000,000 T_target=100,000 rate=393.5 step/s
+[progress] step=80,000/1,000,000 T_target=100,000 rate=393.5 step/s
+[progress] step=90,000/1,000,000 T_target=100,000 rate=394.9 step/s
+[log] step=100,000 train_loss=0.8515 train_acc=0.9131 test_loss=4.0951 test_acc=0.1471 T_target=100,000
+[progress] step=110,000/1,000,000 T_target=1,000,000 rate=398.6 step/s
+[progress] step=120,000/1,000,000 T_target=1,000,000 rate=399.6 step/s
+[progress] step=130,000/1,000,000 T_target=1,000,000 rate=399.9 step/s
+[progress] step=140,000/1,000,000 T_target=1,000,000 rate=400.7 step/s
+[progress] step=150,000/1,000,000 T_target=1,000,000 rate=400.7 step/s
+[progress] step=160,000/1,000,000 T_target=1,000,000 rate=401.4 step/s
+[progress] step=170,000/1,000,000 T_target=1,000,000 rate=401.7 step/s
+[progress] step=180,000/1,000,000 T_target=1,000,000 rate=401.9 step/s
+[progress] step=190,000/1,000,000 T_target=1,000,000 rate=402.5 step/s
+[log] step=200,000 train_loss=0.8386 train_acc=0.9155 test_loss=4.1457 test_acc=0.1393 T_target=1,000,000
+[progress] step=210,000/1,000,000 T_target=1,000,000 rate=402.8 step/s
+[progress] step=220,000/1,000,000 T_target=1,000,000 rate=402.7 step/s
+[progress] step=230,000/1,000,000 T_target=1,000,000 rate=403.1 step/s
+[progress] step=240,000/1,000,000 T_target=1,000,000 rate=403.5 step/s
+[progress] step=250,000/1,000,000 T_target=1,000,000 rate=403.9 step/s
+[progress] step=260,000/1,000,000 T_target=1,000,000 rate=404.4 step/s
+[progress] step=270,000/1,000,000 T_target=1,000,000 rate=404.6 step/s
+[progress] step=280,000/1,000,000 T_target=1,000,000 rate=404.8 step/s
+[progress] step=290,000/1,000,000 T_target=1,000,000 rate=404.8 step/s
+[progress] step=300,000/1,000,000 T_target=1,000,000 rate=405.1 step/s
+[progress] step=310,000/1,000,000 T_target=1,000,000 rate=405.6 step/s
+[progress] step=320,000/1,000,000 T_target=1,000,000 rate=406.1 step/s
+[progress] step=330,000/1,000,000 T_target=1,000,000 rate=406.6 step/s
+[progress] step=340,000/1,000,000 T_target=1,000,000 rate=407.0 step/s
+[progress] step=350,000/1,000,000 T_target=1,000,000 rate=407.4 step/s
+[progress] step=360,000/1,000,000 T_target=1,000,000 rate=407.7 step/s
+[progress] step=370,000/1,000,000 T_target=1,000,000 rate=408.0 step/s
+[progress] step=380,000/1,000,000 T_target=1,000,000 rate=407.9 step/s
+[progress] step=390,000/1,000,000 T_target=1,000,000 rate=407.9 step/s
+[progress] step=400,000/1,000,000 T_target=1,000,000 rate=407.5 step/s
+[progress] step=410,000/1,000,000 T_target=1,000,000 rate=407.5 step/s
+[progress] step=420,000/1,000,000 T_target=1,000,000 rate=407.5 step/s
+[progress] step=430,000/1,000,000 T_target=1,000,000 rate=407.6 step/s
+[progress] step=440,000/1,000,000 T_target=1,000,000 rate=407.9 step/s
+[progress] step=450,000/1,000,000 T_target=1,000,000 rate=408.0 step/s
+[progress] step=460,000/1,000,000 T_target=1,000,000 rate=408.3 step/s
+[progress] step=470,000/1,000,000 T_target=1,000,000 rate=408.6 step/s
+[progress] step=480,000/1,000,000 T_target=1,000,000 rate=408.3 step/s
+[progress] step=490,000/1,000,000 T_target=1,000,000 rate=408.4 step/s
+[log] step=500,000 train_loss=0.8293 train_acc=0.9212 test_loss=3.9701 test_acc=0.1644 T_target=1,000,000
+[progress] step=510,000/1,000,000 T_target=1,000,000 rate=408.7 step/s
+[progress] step=520,000/1,000,000 T_target=1,000,000 rate=408.9 step/s
+[progress] step=530,000/1,000,000 T_target=1,000,000 rate=409.1 step/s
+[progress] step=540,000/1,000,000 T_target=1,000,000 rate=409.4 step/s
+[progress] step=550,000/1,000,000 T_target=1,000,000 rate=409.4 step/s
+[progress] step=560,000/1,000,000 T_target=1,000,000 rate=409.3 step/s
+[progress] step=570,000/1,000,000 T_target=1,000,000 rate=409.5 step/s
+[progress] step=580,000/1,000,000 T_target=1,000,000 rate=409.7 step/s
+[progress] step=590,000/1,000,000 T_target=1,000,000 rate=409.9 step/s
+[progress] step=600,000/1,000,000 T_target=1,000,000 rate=409.8 step/s
+[progress] step=610,000/1,000,000 T_target=1,000,000 rate=410.0 step/s
+[progress] step=620,000/1,000,000 T_target=1,000,000 rate=410.0 step/s
+[progress] step=630,000/1,000,000 T_target=1,000,000 rate=409.7 step/s
+[progress] step=640,000/1,000,000 T_target=1,000,000 rate=409.9 step/s
+[progress] step=650,000/1,000,000 T_target=1,000,000 rate=410.0 step/s
+[progress] step=660,000/1,000,000 T_target=1,000,000 rate=410.0 step/s
+[progress] step=670,000/1,000,000 T_target=1,000,000 rate=410.1 step/s
+[progress] step=680,000/1,000,000 T_target=1,000,000 rate=410.2 step/s
+[progress] step=690,000/1,000,000 T_target=1,000,000 rate=410.1 step/s
+[progress] step=700,000/1,000,000 T_target=1,000,000 rate=410.3 step/s
+[progress] step=710,000/1,000,000 T_target=1,000,000 rate=410.5 step/s
+[progress] step=720,000/1,000,000 T_target=1,000,000 rate=410.5 step/s
+[progress] step=730,000/1,000,000 T_target=1,000,000 rate=410.6 step/s
+[progress] step=740,000/1,000,000 T_target=1,000,000 rate=410.8 step/s
+[progress] step=750,000/1,000,000 T_target=1,000,000 rate=410.9 step/s
+[progress] step=760,000/1,000,000 T_target=1,000,000 rate=411.1 step/s
+[progress] step=770,000/1,000,000 T_target=1,000,000 rate=411.2 step/s
+[progress] step=780,000/1,000,000 T_target=1,000,000 rate=411.2 step/s
+[progress] step=790,000/1,000,000 T_target=1,000,000 rate=411.1 step/s
+[progress] step=800,000/1,000,000 T_target=1,000,000 rate=411.2 step/s
+[progress] step=810,000/1,000,000 T_target=1,000,000 rate=411.3 step/s
+[progress] step=820,000/1,000,000 T_target=1,000,000 rate=411.3 step/s
+[progress] step=830,000/1,000,000 T_target=1,000,000 rate=411.1 step/s
+[progress] step=840,000/1,000,000 T_target=1,000,000 rate=411.0 step/s
+[progress] step=850,000/1,000,000 T_target=1,000,000 rate=411.1 step/s
+[progress] step=860,000/1,000,000 T_target=1,000,000 rate=411.3 step/s
+[progress] step=870,000/1,000,000 T_target=1,000,000 rate=411.4 step/s
+[progress] step=880,000/1,000,000 T_target=1,000,000 rate=411.5 step/s
+[progress] step=890,000/1,000,000 T_target=1,000,000 rate=411.4 step/s
+[progress] step=900,000/1,000,000 T_target=1,000,000 rate=411.5 step/s
+[progress] step=910,000/1,000,000 T_target=1,000,000 rate=411.7 step/s
+[progress] step=920,000/1,000,000 T_target=1,000,000 rate=411.8 step/s
+[progress] step=930,000/1,000,000 T_target=1,000,000 rate=411.9 step/s
+[progress] step=940,000/1,000,000 T_target=1,000,000 rate=411.9 step/s
+[progress] step=950,000/1,000,000 T_target=1,000,000 rate=411.8 step/s
+[progress] step=960,000/1,000,000 T_target=1,000,000 rate=411.6 step/s
+[progress] step=970,000/1,000,000 T_target=1,000,000 rate=411.7 step/s
+[progress] step=980,000/1,000,000 T_target=1,000,000 rate=411.7 step/s
+[progress] step=990,000/1,000,000 T_target=1,000,000 rate=411.7 step/s
+[log] step=1,000,000 train_loss=0.8576 train_acc=0.9179 test_loss=4.0613 test_acc=0.1502 T_target=1,000,000
+[result] phase=fail t_train=None t_test=None final_step=1,000,000 wall=2429.4s
+[saved] results/checkpoints/B_fail_negative_a0p1_lam3p162278_seed0.pt
+[saved] results/checkpoints/B_fail_negative_a0p1_lam3p162278_seed0.json

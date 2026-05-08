@@ -1,0 +1,77 @@
+{
+  "model_cfg": {
+    "d_model": 64,
+    "n_layers": 2,
+    "n_heads": 4,
+    "head_dim": 16,
+    "n_kv_heads": 1,
+    "ffn_hidden": 170,
+    "vocab_size": 115,
+    "max_seq_len": 8,
+    "rope_base": 10000.0,
+    "norm_eps": 1e-05,
+    "tied_embedding": true
+  },
+  "train_cfg": {
+    "lr": 0.001,
+    "betas": [
+      0.9,
+      0.98
+    ],
+    "weight_decay": 0.1,
+    "T_min": 100000,
+    "T_max": 100000,
+    "grok_extension_factor": 50,
+    "grok_ratio": 10.0,
+    "acc_threshold": 0.99,
+    "seed": 0
+  },
+  "task": {
+    "p": 113,
+    "op": "add"
+  },
+  "group": "B",
+  "split": "S3",
+  "tied_embedding": true,
+  "alpha": 0.4,
+  "lam": 0.1,
+  "seed": 0,
+  "split_seed": 0,
+  "result": {
+    "phase": "comprehend",
+    "t_train": 1000,
+    "t_test": 1000,
+    "final_step": 100000,
+    "history": [
+      {
+        "step": 100,
+        "train_loss": 1.7509602308273315,
+        "train_acc": 0.9278269410133362,
+        "test_loss": 2.061630964279175,
+        "test_acc": 0.7705622315406799
+      },
+      {
+        "step": 1000,
+        "train_loss": 5.9728285123128444e-05,
+        "train_acc": 1.0,
+        "test_loss": 0.014295626431703568,
+        "test_acc": 0.9955752491950989
+      },
+      {
+        "step": 10000,
+        "train_loss": 3.524517887854017e-05,
+        "train_acc": 1.0,
+        "test_loss": 0.006709904409945011,
+        "test_acc": 0.9986986517906189
+      },
+      {
+        "step": 100000,
+        "train_loss": 4.3499073854036396e-07,
+        "train_acc": 1.0,
+        "test_loss": 1.1855130424009985e-06,
+        "test_acc": 1.0
+      }
+    ]
+  },
+  "wall_seconds": 598.9678633213043
+}
