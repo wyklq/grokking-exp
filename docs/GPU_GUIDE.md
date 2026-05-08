@@ -127,9 +127,9 @@ python3 scripts/run_scan_instrumented.py \
 ```bash
 python3 scripts/run_scan_instrumented.py \
     --group B --p 113 \
-    --T-min 100000 --T-max 5000000 \
+    --T-min 100000 --T-max 2000000 \
     --n-seeds 1 \
-    --measures-steps 100 1000 10000 100000 500000 1000000 5000000 \
+    --measures-steps 100 1000 10000 100000 500000 1000000 2000000 \
     --progress-interval-steps 100000 \
     --matmul-precision high \
     --skip-hessian \
